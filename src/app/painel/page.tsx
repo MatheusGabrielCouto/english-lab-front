@@ -1,31 +1,23 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { LogoutButton } from "@/components/auth/logout-button";
+import { AppHeader } from "@/components/app-header";
+import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Painel" };
 
-const soon = [
-  { title: "Trilha de aulas", tone: "primary", text: "Do A1 ao C2, lição por lição." },
-  { title: "Anki", tone: "sky", text: "Flashcards com repetição espaçada." },
-  { title: "Biblioteca", tone: "butter", text: "Livros em inglês para ler e salvar palavras." },
+const areas = [
+  { title: "Trilha de aulas", tone: "primary", text: "Do A1 ao C2, lição por lição.", href: null },
+  { title: "Anki", tone: "sky", text: "Flashcards com repetição espaçada.", href: "/anki" },
+  { title: "Biblioteca", tone: "butter", text: "Livros em inglês para ler e salvar palavras.", href: null },
 ] as const;
 
 export default function DashboardPage() {
   return (
     <div className="mx-auto w-full max-w-5xl px-5 py-6">
-      <header className="flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 font-display text-2xl font-semibold">
-          <span className="grid size-10 place-items-center rounded-2xl bg-butter text-xl text-ink shadow-[0_3px_0_0_var(--color-butter-edge)]">
-            E
-          </span>
-          English Lab
-        </Link>
-        <LogoutButton />
-      </header>
+      <AppHeader />
 
       {/* a sessão é lida na requisição, então fica atrás de um Suspense */}
       <Suspense fallback={<p className="mt-12 text-muted">Carregando seu painel…</p>}>
@@ -51,16 +43,20 @@ async function Welcome() {
         Olá, {firstName}! 👋
       </h1>
       <p className="mt-3 max-w-xl text-lg text-muted text-pretty">
-        Sua conta está pronta. Estas áreas chegam nas próximas fases.
+        Por onde vamos começar hoje?
       </p>
 
       <ul className="mt-10 grid gap-5 md:grid-cols-3">
-        {soon.map((item) => (
+        {areas.map((item) => (
           <li key={item.title}>
             <Card tone={item.tone} className="h-full">
               <h2 className="font-display text-2xl font-semibold">{item.title}</h2>
               <p className="mt-3 text-pretty">{item.text}</p>
-              <p className="mt-4 text-sm font-bold text-muted">Em breve</p>
+              {item.href ? (
+                <ButtonLink href={item.href} className="mt-5">Abrir</ButtonLink>
+              ) : (
+                <p className="mt-4 text-sm font-bold text-muted">Em breve</p>
+              )}
             </Card>
           </li>
         ))}

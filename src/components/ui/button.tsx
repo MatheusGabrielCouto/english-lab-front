@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/cn";
 
-type Variant = "primary" | "sky" | "coral" | "ghost";
+type Variant = "primary" | "sky" | "coral" | "butter" | "ghost";
 type Size = "md" | "lg";
 
 const variants: Record<Variant, string> = {
@@ -11,6 +11,8 @@ const variants: Record<Variant, string> = {
   sky: "bg-sky text-ink shadow-[0_4px_0_0_var(--color-sky-edge)] hover:brightness-105",
   coral:
     "bg-coral text-ink shadow-[0_4px_0_0_var(--color-coral-edge)] hover:brightness-105",
+  butter:
+    "bg-butter text-ink shadow-[0_4px_0_0_var(--color-butter-edge)] hover:brightness-105",
   ghost:
     "bg-surface text-foreground border-2 border-border shadow-[0_4px_0_0_var(--color-border)] hover:bg-surface-soft",
 };
