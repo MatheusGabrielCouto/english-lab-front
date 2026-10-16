@@ -1,26 +1,131 @@
 @import "tailwindcss";
 
+/*
+ * English Lab — tokens do design system (lúdico e confortável).
+ * Paleta quente e suave; o tema escuro troca só os valores, não as classes.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  --background: #fff8ec;
+  --surface: #ffffff;
+  --surface-soft: #fff1da;
+  --foreground: #2b2a33;
+  --muted: #6b6878;
+  --border: #eadfca;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --primary: #2a8a4f;
+  --primary-edge: #1e6b3a;
+  --primary-soft: #d9f2e0;
+  --on-primary: #ffffff;
+
+  --sky: #4aa8e0;
+  --sky-edge: #2f86bb;
+  --sky-soft: #d3ecfa;
+
+  --coral: #ff7a59;
+  --coral-edge: #d95a3a;
+  --coral-soft: #ffe0d6;
+
+  --butter: #ffd66b;
+  --butter-edge: #e0b13f;
+  --butter-soft: #fff0c2;
+
+  --lavender: #a78bfa;
+  --lavender-edge: #7f62d9;
+  --lavender-soft: #e9e1ff;
+
+  --ink-on-color: #2b2a33;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #1d1b26;
+    --surface: #2a2735;
+    --surface-soft: #34303f;
+    --foreground: #f5efe6;
+    --muted: #b4afc2;
+    --border: #413c4f;
+
+    --primary: #5ccb85;
+    --primary-edge: #3a9d60;
+    --primary-soft: #1f3a2b;
+    --on-primary: #10301c;
+
+    --sky-soft: #1d3342;
+    --coral-soft: #44281f;
+    --butter-soft: #44391c;
+    --lavender-soft: #2e2848;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-soft: var(--surface-soft);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+
+  --color-primary: var(--primary);
+  --color-primary-edge: var(--primary-edge);
+  --color-primary-soft: var(--primary-soft);
+  --color-on-primary: var(--on-primary);
+
+  --color-sky: var(--sky);
+  --color-sky-edge: var(--sky-edge);
+  --color-sky-soft: var(--sky-soft);
+
+  --color-coral: var(--coral);
+  --color-coral-edge: var(--coral-edge);
+  --color-coral-soft: var(--coral-soft);
+
+  --color-butter: var(--butter);
+  --color-butter-edge: var(--butter-edge);
+  --color-butter-soft: var(--butter-soft);
+
+  --color-lavender: var(--lavender);
+  --color-lavender-edge: var(--lavender-edge);
+  --color-lavender-soft: var(--lavender-soft);
+
+  --color-ink: var(--ink-on-color);
+
+  --font-sans: var(--font-nunito), ui-rounded, system-ui, sans-serif;
+  --font-display: var(--font-fredoka), var(--font-nunito), ui-rounded, system-ui,
+    sans-serif;
+
+  --radius-card: 1.5rem;
+  --radius-pill: 999px;
+
+  --animate-float: float 4.5s ease-in-out infinite;
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 3px solid var(--sky);
+  outline-offset: 3px;
+  border-radius: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

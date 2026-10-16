@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
+const API_URL = process.env.API_URL ?? "http://localhost:3001";
+
 const nextConfig: NextConfig = {
-  /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
@@ -11,6 +12,11 @@ const nextConfig: NextConfig = {
         as: "*.css",
       },
     },
+  },
+  // O navegador fala só com o Next; o Next encaminha /api/* para o NestJS.
+  // Assim os cookies de sessão ficam na mesma origem (sem CORS).
+  async rewrites() {
+    return [{ source: "/api/:path*", destination: `${API_URL}/api/:path*` }];
   },
 };
 

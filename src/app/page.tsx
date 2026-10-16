@@ -1,69 +1,129 @@
-import Image from "next/image";
+import { Suspense } from "react";
+import { ApiStatus, ApiStatusFallback } from "@/components/api-status";
+import { Mascot } from "@/components/mascot";
+import { ButtonLink } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+
+const levels = [
+  { code: "A1", name: "Iniciante", tone: "primary", text: "Alfabeto, cumprimentos, verbo to be e rotina." },
+  { code: "A2", name: "Básico", tone: "sky", text: "Passado, futuro simples e conversas do dia a dia." },
+  { code: "B1", name: "Intermediário", tone: "butter", text: "Present perfect, modais e phrasal verbs." },
+  { code: "B2", name: "Intermediário+", tone: "coral", text: "Condicionais, voz passiva e escrita formal." },
+  { code: "C1", name: "Avançado", tone: "lavender", text: "Idioms, collocations e textos acadêmicos." },
+  { code: "C2", name: "Proficiente", tone: "primary", text: "Nuances, estilo e fluência quase nativa." },
+] as const;
+
+const features = [
+  {
+    title: "Anki integrado",
+    tone: "sky",
+    text: "Flashcards com repetição espaçada (FSRS), cartões cloze e importação dos seus baralhos .apkg.",
+  },
+  {
+    title: "Biblioteca de livros",
+    tone: "butter",
+    text: "Leia PDFs em inglês dentro do site. Toque numa palavra e ela vira flashcard com a frase do livro.",
+  },
+  {
+    title: "Trilha de aulas",
+    tone: "primary",
+    text: "Do alfabeto ao C2, com exercícios curtos, XP e sequência diária para manter o ritmo.",
+  },
+] as const;
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <>
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5">
+        <a href="#" className="flex items-center gap-3 font-display text-2xl font-semibold">
+          <span className="grid size-10 place-items-center rounded-2xl bg-butter text-xl text-ink shadow-[0_3px_0_0_var(--color-butter-edge)]">
+            E
+          </span>
+          English Lab
+        </a>
+        <nav aria-label="Principal" className="hidden items-center gap-7 font-semibold text-muted sm:flex">
+          <a className="transition-colors hover:text-foreground" href="#trilha">Trilha</a>
+          <a className="transition-colors hover:text-foreground" href="#recursos">Recursos</a>
+        </nav>
+      </header>
+
+      <main className="flex-1">
+        <section className="mx-auto grid w-full max-w-6xl items-center gap-10 px-5 pb-16 pt-8 md:grid-cols-[1.1fr_0.9fr] md:pt-16">
+          <div>
+            <p className="mb-4 inline-block rounded-pill bg-primary-soft px-4 py-1.5 text-sm font-bold text-primary">
+              Do A1 ao C2, no seu ritmo
+            </p>
+            <h1 className="font-display text-5xl font-semibold leading-[1.05] text-balance md:text-6xl">
+              Aprenda inglês de um jeito leve e que dá resultado.
+            </h1>
+            <p className="mt-5 max-w-xl text-lg text-muted text-pretty">
+              Aulas curtas, flashcards que você não esquece e livros para ler de
+              verdade. Tudo conectado: o que você lê vira o que você revisa.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <ButtonLink href="#trilha" size="lg">Conhecer a trilha</ButtonLink>
+              <ButtonLink href="#recursos" size="lg" variant="ghost">Ver recursos</ButtonLink>
+            </div>
+          </div>
+
+          <div className="mx-auto w-64 text-foreground md:w-80">
+            <Mascot className="motion-safe:animate-float" />
+          </div>
+        </section>
+
+        <section id="trilha" className="mx-auto w-full max-w-6xl scroll-mt-6 px-5 py-14">
+          <h2 className="font-display text-3xl font-semibold md:text-4xl">Sua trilha, nível por nível</h2>
+          <p className="mt-2 max-w-2xl text-muted">
+            Faça o teste de nível e comece de onde faz sentido. Cada nível tem
+            unidades, lições e um baralho próprio de vocabulário.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+          <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {levels.map((level, index) => (
+              <li key={level.code}>
+                <Card
+                  tone={level.tone}
+                  className="h-full transition-transform duration-200 ease-out hover:-translate-y-1"
+                >
+                  <div className="flex items-baseline justify-between">
+                    <span className="font-display text-4xl font-semibold">{level.code}</span>
+                    <span className="text-sm font-bold text-muted">{level.name}</span>
+                  </div>
+                  <p className="mt-3 text-pretty">{level.text}</p>
+                  <Progress
+                    className="mt-5"
+                    value={index === 0 ? 8 : 0}
+                    label={`Progresso no nível ${level.code}`}
+                  />
+                </Card>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section id="recursos" className="mx-auto w-full max-w-6xl scroll-mt-6 px-5 py-14">
+          <h2 className="font-display text-3xl font-semibold md:text-4xl">Tudo o que você precisa num lugar só</h2>
+          <ul className="mt-8 grid gap-5 md:grid-cols-3">
+            {features.map((feature) => (
+              <li key={feature.title}>
+                <Card tone={feature.tone} className="h-full">
+                  <h3 className="font-display text-2xl font-semibold">{feature.title}</h3>
+                  <p className="mt-3 text-pretty">{feature.text}</p>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        </section>
       </main>
-    </div>
+
+      <footer className="border-t-2 border-border">
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-6 text-sm text-muted">
+          <span>© 2026 English Lab</span>
+          <Suspense fallback={<ApiStatusFallback />}>
+            <ApiStatus />
+          </Suspense>
+        </div>
+      </footer>
+    </>
   );
 }
