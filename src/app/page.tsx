@@ -46,6 +46,10 @@ export default function Home() {
           <a className="transition-colors hover:text-foreground" href="#trilha">Trilha</a>
           <a className="transition-colors hover:text-foreground" href="#recursos">Recursos</a>
         </nav>
+        <div className="flex items-center gap-3">
+          <ButtonLink href="/entrar" variant="ghost">Entrar</ButtonLink>
+          <ButtonLink href="/cadastrar" className="hidden sm:inline-flex">Criar conta</ButtonLink>
+        </div>
       </header>
 
       <main className="flex-1">
@@ -62,8 +66,8 @@ export default function Home() {
               verdade. Tudo conectado: o que você lê vira o que você revisa.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
-              <ButtonLink href="#trilha" size="lg">Conhecer a trilha</ButtonLink>
-              <ButtonLink href="#recursos" size="lg" variant="ghost">Ver recursos</ButtonLink>
+              <ButtonLink href="/cadastrar" size="lg">Começar agora</ButtonLink>
+              <ButtonLink href="#trilha" size="lg" variant="ghost">Conhecer a trilha</ButtonLink>
             </div>
           </div>
 

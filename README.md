@@ -20,3 +20,10 @@ Componentes base em `src/components/ui` (`Button`, `Card`, `Progress`) e o masco
 `src/components/mascot.tsx`.
 
 > `cacheComponents` está ligado: dados dinâmicos precisam ficar dentro de `<Suspense>`.
+
+## Autenticação
+
+- `src/proxy.ts` protege `/painel` e redireciona logados para fora de `/entrar` e `/cadastrar`.
+- O refresh token só trafega em `/api/auth/*` (`Path=/api/auth`). Quando o access token expira, o proxy
+  manda a navegação por `src/app/api/auth/session/route.ts`, que renova a sessão e volta para a página.
+- Server Components leem o usuário com `getCurrentUser()` (`src/lib/session.ts`), sempre dentro de `<Suspense>`.
