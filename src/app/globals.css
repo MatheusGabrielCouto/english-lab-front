@@ -34,6 +34,13 @@
   --lavender-soft: #e9e1ff;
 
   --ink-on-color: #2b2a33;
+
+  /* gráficos: paleta categórica validada (ordem fixa; ver scripts/validate_palette.js do dataviz) */
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-3: #1baf7a;
+  --viz-4: #eda100;
+  --viz-5: #e87ba4;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -54,6 +61,12 @@
     --coral-soft: #44281f;
     --butter-soft: #44391c;
     --lavender-soft: #2e2848;
+
+    --viz-1: #3987e5;
+    --viz-2: #d95926;
+    --viz-3: #199e70;
+    --viz-4: #c98500;
+    --viz-5: #d55181;
   }
 }
 
@@ -87,6 +100,12 @@
   --color-lavender-soft: var(--lavender-soft);
 
   --color-ink: var(--ink-on-color);
+
+  --color-viz-1: var(--viz-1);
+  --color-viz-2: var(--viz-2);
+  --color-viz-3: var(--viz-3);
+  --color-viz-4: var(--viz-4);
+  --color-viz-5: var(--viz-5);
 
   --font-sans: var(--font-nunito), ui-rounded, system-ui, sans-serif;
   --font-display: var(--font-fredoka), var(--font-nunito), ui-rounded, system-ui,

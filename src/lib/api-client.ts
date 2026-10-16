@@ -27,11 +27,18 @@ function refreshSession(): Promise<void> {
 }
 
 async function send(path: string, { method = "GET", body }: Options) {
+  // FormData (upload) leva o Content-Type com o boundary; o navegador define sozinho
+  const isForm = typeof FormData !== "undefined" && body instanceof FormData;
   return fetch(`/api${path}`, {
     method,
-    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    headers: body === undefined || isForm ? undefined : { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
   });
+}
+
+/** Envia um arquivo (multipart). Mesmas regras de renovação de sessão do `api`. */
+export function upload<T>(path: string, form: FormData): Promise<T> {
+  return api<T>(path, { method: "POST", body: form });
 }
 
 /**

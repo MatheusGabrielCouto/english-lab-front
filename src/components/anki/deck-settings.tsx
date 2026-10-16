@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { ExportLinks } from "@/components/anki/export-panel";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
@@ -132,6 +133,14 @@ export function DeckSettings({ deck }: { deck: Deck }) {
             </Button>
           </div>
         </form>
+      </Card>
+
+      <Card tone="sky">
+        <h2 className="font-display text-xl font-semibold">Exportar este baralho</h2>
+        <p className="mb-4 mt-1 text-pretty">
+          Leva também os subbaralhos. O arquivo .apkg abre no Anki; os cartões chegam como novos.
+        </p>
+        <ExportLinks deckId={deck.id} />
       </Card>
 
       <Card tone="coral">

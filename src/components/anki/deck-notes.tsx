@@ -1,8 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useMemo, useRef, useState, type FormEvent } from "react";
 import { Mascot } from "@/components/mascot";
+import { NoteEditor } from "@/components/anki/note-editor";
+import { NoteContent, noteLabel, TypeBadge } from "@/components/anki/note-view";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
@@ -23,35 +25,6 @@ const TYPE_HELP: Record<NoteType, string> = {
   CLOZE: "Esconde uma palavra no meio da frase.",
 };
 
-const TYPE_BADGE: Record<NoteType, string> = {
-  BASIC: "bg-sky-soft text-foreground",
-  BASIC_REVERSED: "bg-lavender-soft text-foreground",
-  CLOZE: "bg-butter-soft text-foreground",
-};
-
-const CLOZE_RE = /\{\{c(\d+)::([\s\S]+?)(?:::([\s\S]+?))?\}\}/g;
-
-/** Texto de uma nota cloze com as lacunas destacadas (sempre como texto). */
-function ClozePreview({ text }: { text: string }) {
-  const parts: ReactNode[] = [];
-  let cursor = 0;
-  for (const match of text.matchAll(CLOZE_RE)) {
-    if (match.index > cursor) parts.push(text.slice(cursor, match.index));
-    parts.push(
-      <mark
-        key={match.index}
-        className="rounded-md bg-primary-soft px-1 font-bold text-primary"
-        title={`Lacuna ${match[1]}${match[3] ? ` · dica: ${match[3]}` : ""}`}
-      >
-        {match[2]}
-      </mark>,
-    );
-    cursor = match.index + match[0].length;
-  }
-  if (cursor < text.length) parts.push(text.slice(cursor));
-  return <>{parts}</>;
-}
-
 function searchable(note: Note) {
   const { front, back, text, extra } = note.fields;
   return [front, back, text, extra, ...note.tags].filter(Boolean).join(" ").toLowerCase();
@@ -66,6 +39,8 @@ export function DeckNotes({ deckId, initial }: { deckId: string; initial: NotesP
   const [back, setBack] = useState("");
   const [text, setText] = useState("");
   const [extra, setExtra] = useState("");
+  const [tags, setTags] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string }>();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -105,12 +80,13 @@ export function DeckNotes({ deckId, initial }: { deckId: string; initial: NotesP
     setPending(true);
     setMessage(undefined);
     setFieldErrors({});
+    const tagList = tags.split(/[\s,;]+/).filter(Boolean);
     try {
       const { note } = await api<{ note: Note }>("/anki/notes", {
         method: "POST",
         body: isCloze
-          ? { type, deckId, text, extra: extra || undefined }
-          : { type, deckId, front, back, extra: extra || undefined },
+          ? { type, deckId, text, extra: extra || undefined, tags: tagList }
+          : { type, deckId, front, back, extra: extra || undefined, tags: tagList },
       });
       setNotes((current) => [note, ...current]);
       router.refresh(); // atualiza os contadores do cabeçalho
@@ -118,6 +94,7 @@ export function DeckNotes({ deckId, initial }: { deckId: string; initial: NotesP
       setBack("");
       setText("");
       setExtra("");
+      setTags("");
       setMessage({
         kind: "ok",
         text: `Pronto! ${note.cardCount} ${note.cardCount === 1 ? "cartão criado" : "cartões criados"}.`,
@@ -253,6 +230,14 @@ export function DeckNotes({ deckId, initial }: { deckId: string; initial: NotesP
               placeholder="An apple a day keeps the doctor away."
               maxLength={2000}
             />
+            <Field
+              id="note-tags"
+              label="Tags (opcional)"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="verbo a1 viagem"
+              hint="Separe com espaço ou vírgula."
+            />
 
             <p
               role="status"
@@ -343,38 +328,41 @@ export function DeckNotes({ deckId, initial }: { deckId: string; initial: NotesP
               <li key={note.id}>
                 <Card className="p-4">
                   <div className="flex items-start justify-between gap-3">
-                    <span className={cn("rounded-pill px-3 py-0.5 text-xs font-bold", TYPE_BADGE[note.type])}>
-                      {NOTE_TYPE_LABEL[note.type]} · {note.cardCount}{" "}
-                      {note.cardCount === 1 ? "cartão" : "cartões"}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => void remove(note)}
-                      aria-label={`Apagar a nota ${note.fields.front ?? note.fields.text ?? ""}`}
-                      className="shrink-0 rounded-pill px-3 py-1 text-sm font-semibold text-muted transition-colors hover:bg-coral-soft hover:text-foreground"
-                    >
-                      Apagar
-                    </button>
+                    <TypeBadge note={note} />
+                    {editingId !== note.id && (
+                      <div className="flex shrink-0 gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setEditingId(note.id)}
+                          aria-label={`Editar a nota ${noteLabel(note)}`}
+                          className="rounded-pill px-3 py-1 text-sm font-semibold text-muted transition-colors hover:bg-sky-soft hover:text-foreground"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void remove(note)}
+                          aria-label={`Apagar a nota ${noteLabel(note)}`}
+                          className="rounded-pill px-3 py-1 text-sm font-semibold text-muted transition-colors hover:bg-coral-soft hover:text-foreground"
+                        >
+                          Apagar
+                        </button>
+                      </div>
+                    )}
                   </div>
 
-                  {note.type === "CLOZE" ? (
-                    <p className="mt-3 whitespace-pre-wrap break-words font-display text-xl leading-snug">
-                      <ClozePreview text={note.fields.text ?? ""} />
-                    </p>
+                  {editingId === note.id ? (
+                    <NoteEditor
+                      note={note}
+                      onCancel={() => setEditingId(null)}
+                      onSaved={(saved) => {
+                        setNotes((current) => current.map((item) => (item.id === saved.id ? saved : item)));
+                        setEditingId(null);
+                        router.refresh();
+                      }}
+                    />
                   ) : (
-                    <div className="mt-3 grid gap-1 sm:grid-cols-2 sm:gap-4">
-                      <p className="whitespace-pre-wrap break-words font-display text-xl font-semibold">
-                        {note.fields.front}
-                      </p>
-                      <p className="whitespace-pre-wrap break-words text-lg text-muted">{note.fields.back}</p>
-                    </div>
-                  )}
-
-                  {note.fields.extra && (
-                    <p className="mt-3 whitespace-pre-wrap break-words rounded-xl bg-butter-soft px-3 py-2 text-sm">
-                      <span className="mr-1.5 font-bold">Dica:</span>
-                      {note.fields.extra}
-                    </p>
+                    <NoteContent note={note} />
                   )}
                 </Card>
               </li>

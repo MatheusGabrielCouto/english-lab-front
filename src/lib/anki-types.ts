@@ -66,3 +66,44 @@ export const NOTE_TYPE_LABEL: Record<NoteType, string> = {
   BASIC_REVERSED: "Básico + invertido",
   CLOZE: "Lacuna (cloze)",
 };
+
+/** Nota nos resultados de busca: inclui o baralho e a situação dos cartões. */
+export type SearchedNote = Note & {
+  deckName: string;
+  suspendedCards: number;
+  states: { new: number; learning: number; review: number };
+};
+
+export type SearchPage = { notes: SearchedNote[]; nextCursor: string | null };
+
+export type StatsDay = { date: string; reviews: number; correct: number; minutes: number };
+
+export type Stats = {
+  deckId: string | null;
+  days: number;
+  today: { reviews: number; correct: number; minutes: number };
+  streak: number;
+  allTime: { reviews: number; minutes: number; activeDays: number };
+  retention: { rate: number | null; sample: number };
+  history: StatsDay[];
+  forecast: { date: string; due: number }[];
+  cards: {
+    total: number;
+    new: number;
+    learning: number;
+    young: number;
+    mature: number;
+    suspended: number;
+  };
+};
+
+export type ImportSummary = {
+  deckId: string | null;
+  decksCreated: number;
+  notesImported: number;
+  cardsCreated: number;
+  skippedDuplicates: number;
+  skippedInvalid: number;
+  ignoredMedia: number;
+  truncated: number;
+};
