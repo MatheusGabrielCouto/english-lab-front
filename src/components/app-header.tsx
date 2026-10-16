@@ -4,6 +4,7 @@ import { LogoutButton } from "@/components/auth/logout-button";
 const links = [
   { href: "/painel", label: "Painel" },
   { href: "/anki", label: "Anki" },
+  { href: "/biblioteca", label: "Biblioteca" },
 ];
 
 /** Cabeçalho das áreas logadas. Estático: não depende da sessão. */

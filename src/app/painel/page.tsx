@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Painel" };
 const areas = [
   { title: "Trilha de aulas", tone: "primary", text: "Do A1 ao C2, lição por lição.", href: null },
   { title: "Anki", tone: "sky", text: "Flashcards com repetição espaçada.", href: "/anki" },
-  { title: "Biblioteca", tone: "butter", text: "Livros em inglês para ler e salvar palavras.", href: null },
+  { title: "Biblioteca", tone: "butter", text: "Livros em inglês para ler e salvar palavras.", href: "/biblioteca" },
 ] as const;
 
 export default function DashboardPage() {

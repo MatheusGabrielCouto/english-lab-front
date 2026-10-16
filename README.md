@@ -38,3 +38,12 @@ Rotas em `/anki`: baralhos, `/anki/cartoes` (buscar, editar, mover, suspender e 
   (`--viz-1..5`) foram validadas com o `validate_palette.js` do dataviz nos dois temas; no tema claro, aqua, amarelo e
   magenta ficam abaixo de 3:1 de contraste, então a legenda sempre mostra os números (regra de alívio).
 - Downloads de exportação são links `<a download>` para `/api/anki/export/*`: o navegador baixa com o cookie de sessão.
+
+## Biblioteca
+
+- `/biblioteca`: estante com filtro por nível, busca e "Continue lendo". `/biblioteca/[id]`: leitor com **pdf.js**
+  (página nítida em canvas, camada de texto selecionável, zoom, temas claro/sépia/escuro, atalhos ← → e retomada da página).
+- `/admin/livros` (só admin): lê o PDF no navegador (nº de páginas e capa da 1ª página), envia **direto ao bucket** com
+  barra de progresso e pede a confirmação ao backend.
+- Os recursos do pdf.js (fontes, CMaps, WASM) são copiados para `public/pdfjs` por `scripts/copy-pdfjs-assets.mjs`
+  (`postinstall` e `prebuild`); a pasta não é versionada.
