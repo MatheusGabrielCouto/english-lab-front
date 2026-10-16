@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, type FormEvent } from "react";
+import { useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { Mascot } from "@/components/mascot";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
@@ -16,17 +17,47 @@ import { cn } from "@/lib/cn";
 
 const TYPES: NoteType[] = ["BASIC", "BASIC_REVERSED", "CLOZE"];
 
-function noteTitle(note: Note) {
-  return (note.fields.front ?? note.fields.text ?? "").replace(/\{\{c\d+::(.+?)(?:::.+?)?\}\}/g, "[$1]");
+const TYPE_HELP: Record<NoteType, string> = {
+  BASIC: "Frente → verso. Ideal para vocabulário.",
+  BASIC_REVERSED: "Gera dois cartões: um em cada direção.",
+  CLOZE: "Esconde uma palavra no meio da frase.",
+};
+
+const TYPE_BADGE: Record<NoteType, string> = {
+  BASIC: "bg-sky-soft text-foreground",
+  BASIC_REVERSED: "bg-lavender-soft text-foreground",
+  CLOZE: "bg-butter-soft text-foreground",
+};
+
+const CLOZE_RE = /\{\{c(\d+)::([\s\S]+?)(?:::([\s\S]+?))?\}\}/g;
+
+/** Texto de uma nota cloze com as lacunas destacadas (sempre como texto). */
+function ClozePreview({ text }: { text: string }) {
+  const parts: ReactNode[] = [];
+  let cursor = 0;
+  for (const match of text.matchAll(CLOZE_RE)) {
+    if (match.index > cursor) parts.push(text.slice(cursor, match.index));
+    parts.push(
+      <mark
+        key={match.index}
+        className="rounded-md bg-primary-soft px-1 font-bold text-primary"
+        title={`Lacuna ${match[1]}${match[3] ? ` · dica: ${match[3]}` : ""}`}
+      >
+        {match[2]}
+      </mark>,
+    );
+    cursor = match.index + match[0].length;
+  }
+  if (cursor < text.length) parts.push(text.slice(cursor));
+  return <>{parts}</>;
 }
 
-export function DeckNotes({
-  deckId,
-  initial,
-}: {
-  deckId: string;
-  initial: NotesPage;
-}) {
+function searchable(note: Note) {
+  const { front, back, text, extra } = note.fields;
+  return [front, back, text, extra, ...note.tags].filter(Boolean).join(" ").toLowerCase();
+}
+
+export function DeckNotes({ deckId, initial }: { deckId: string; initial: NotesPage }) {
   const router = useRouter();
   const [notes, setNotes] = useState(initial.notes);
   const [cursor, setCursor] = useState(initial.nextCursor);
@@ -38,12 +69,21 @@ export function DeckNotes({
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string }>();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<NoteType | "ALL">("ALL");
   const clozeRef = useRef<HTMLTextAreaElement>(null);
 
   const isCloze = type === "CLOZE";
   const canSubmit = isCloze ? text.trim() : front.trim() && back.trim();
 
-  /** Envolve o texto selecionado em {{cN::…}}; N = próxima lacuna (ou repete com Shift). */
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return notes.filter(
+      (note) => (filter === "ALL" || note.type === filter) && (!q || searchable(note).includes(q)),
+    );
+  }, [notes, query, filter]);
+
+  /** Envolve o texto selecionado em {{cN::…}}; N = próxima lacuna (ou repete a última). */
   function wrapCloze(sameNumber: boolean) {
     const el = clozeRef.current;
     if (!el) return;
@@ -52,12 +92,11 @@ export function DeckNotes({
     const n = sameNumber && highest > 0 ? highest : highest + 1;
     const { selectionStart: from, selectionEnd: to } = el;
     const selected = text.slice(from, to) || "resposta";
-    const next = `${text.slice(0, from)}{{c${n}::${selected}}}${text.slice(to)}`;
-    setText(next);
+    const wrapped = `{{c${n}::${selected}}}`;
+    setText(`${text.slice(0, from)}${wrapped}${text.slice(to)}`);
     requestAnimationFrame(() => {
       el.focus();
-      const end = from + `{{c${n}::${selected}}}`.length;
-      el.setSelectionRange(end, end);
+      el.setSelectionRange(from + wrapped.length, from + wrapped.length);
     });
   }
 
@@ -122,8 +161,12 @@ export function DeckNotes({
     "min-h-24 rounded-2xl border-2 border-border bg-surface px-4 py-3 text-base text-foreground hover:border-sky focus-visible:border-sky focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky/30";
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_1.1fr]">
-      <section aria-labelledby="add-card">
+    <div className="grid gap-8 lg:grid-cols-[1.25fr_1fr] lg:items-start">
+      {/* Formulário: no celular vem primeiro; no desktop fica à direita e acompanha a rolagem */}
+      <section
+        aria-labelledby="add-card"
+        className="lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1"
+      >
         <Card tone="butter">
           <h2 id="add-card" className="font-display text-2xl font-semibold">
             Adicionar cartão
@@ -148,6 +191,7 @@ export function DeckNotes({
               </button>
             ))}
           </div>
+          <p className="mt-2 text-sm text-muted">{TYPE_HELP[type]}</p>
 
           <form onSubmit={onSubmit} className="mt-5 flex flex-col gap-4">
             {isCloze ? (
@@ -172,8 +216,8 @@ export function DeckNotes({
                   <Button type="button" variant="ghost" onClick={() => wrapCloze(true)}>
                     Mesma lacuna
                   </Button>
-                  <span className="text-sm text-muted">Selecione uma palavra e clique.</span>
                 </div>
+                <p className="text-sm text-muted">Selecione uma palavra no texto e clique em “Criar lacuna”.</p>
                 {fieldErrors.text && (
                   <p className="text-sm font-semibold text-coral-edge">{fieldErrors.text}</p>
                 )}
@@ -227,42 +271,119 @@ export function DeckNotes({
         </Card>
       </section>
 
-      <section aria-labelledby="notes-title">
-        <h2 id="notes-title" className="font-display text-2xl font-semibold">
-          Cartões deste baralho
-        </h2>
+      <section aria-labelledby="notes-title" className="lg:col-start-1 lg:row-start-1">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="notes-title" className="font-display text-2xl font-semibold">
+            Cartões deste baralho
+          </h2>
+          <p className="text-sm text-muted">
+            {visible.length === notes.length
+              ? `${notes.length} ${notes.length === 1 ? "nota" : "notas"}`
+              : `${visible.length} de ${notes.length}`}
+            {cursor && "+"}
+          </p>
+        </div>
+
+        {notes.length > 0 && (
+          <div className="mt-4 flex flex-col gap-3">
+            <div>
+              <label htmlFor="notes-search" className="sr-only">
+                Buscar nos cartões
+              </label>
+              <input
+                id="notes-search"
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar por palavra, tradução ou dica…"
+                className="h-12 w-full rounded-2xl border-2 border-border bg-surface px-4 text-base placeholder:text-muted/70 hover:border-sky focus-visible:border-sky focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky/30"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por tipo">
+              {(["ALL", ...TYPES] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={filter === option}
+                  onClick={() => setFilter(option)}
+                  className={cn(
+                    "rounded-pill border-2 px-3 py-1 text-sm font-bold transition-colors",
+                    filter === option
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border bg-surface text-muted hover:border-sky hover:text-foreground",
+                  )}
+                >
+                  {option === "ALL" ? "Todos" : NOTE_TYPE_LABEL[option]}
+                </button>
+              ))}
+            </div>
+            {cursor && query.trim() && (
+              <p className="text-sm text-muted">
+                A busca olha só os cartões já carregados. Use “Carregar mais” para ampliar.
+              </p>
+            )}
+          </div>
+        )}
+
         {notes.length === 0 ? (
-          <p className="mt-3 text-muted">Ainda não há nada por aqui. Adicione o primeiro ao lado!</p>
+          <div className="mt-8 flex flex-col items-center rounded-card border-2 border-dashed border-border px-6 py-10 text-center">
+            <Mascot className="w-28 motion-safe:animate-float" />
+            <p className="mt-3 font-display text-xl font-semibold">Este baralho está vazio</p>
+            <p className="mt-1 text-muted text-pretty">
+              Adicione o primeiro cartão no formulário. Três ou quatro por dia já fazem diferença!
+            </p>
+          </div>
+        ) : visible.length === 0 ? (
+          <p className="mt-8 rounded-card border-2 border-dashed border-border px-6 py-8 text-center text-muted">
+            Nenhum cartão encontrado. Tente outra palavra ou limpe o filtro.
+          </p>
         ) : (
-          <ul className="mt-4 flex flex-col gap-3">
-            {notes.map((note) => (
+          <ul className="mt-5 flex flex-col gap-3">
+            {visible.map((note) => (
               <li key={note.id}>
-                <Card className="flex items-start justify-between gap-3 p-4">
-                  <div className="min-w-0">
-                    <p className="whitespace-pre-wrap break-words font-semibold">{noteTitle(note)}</p>
-                    {note.fields.back && (
-                      <p className="mt-0.5 whitespace-pre-wrap break-words text-muted">{note.fields.back}</p>
-                    )}
-                    <p className="mt-2 text-xs font-bold text-muted">
+                <Card className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className={cn("rounded-pill px-3 py-0.5 text-xs font-bold", TYPE_BADGE[note.type])}>
                       {NOTE_TYPE_LABEL[note.type]} · {note.cardCount}{" "}
                       {note.cardCount === 1 ? "cartão" : "cartões"}
-                    </p>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => void remove(note)}
+                      aria-label={`Apagar a nota ${note.fields.front ?? note.fields.text ?? ""}`}
+                      className="shrink-0 rounded-pill px-3 py-1 text-sm font-semibold text-muted transition-colors hover:bg-coral-soft hover:text-foreground"
+                    >
+                      Apagar
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => void remove(note)}
-                    aria-label={`Apagar a nota ${noteTitle(note)}`}
-                    className="shrink-0 rounded-pill px-3 py-1 text-sm font-semibold text-muted transition-colors hover:bg-coral-soft hover:text-foreground"
-                  >
-                    Apagar
-                  </button>
+
+                  {note.type === "CLOZE" ? (
+                    <p className="mt-3 whitespace-pre-wrap break-words font-display text-xl leading-snug">
+                      <ClozePreview text={note.fields.text ?? ""} />
+                    </p>
+                  ) : (
+                    <div className="mt-3 grid gap-1 sm:grid-cols-2 sm:gap-4">
+                      <p className="whitespace-pre-wrap break-words font-display text-xl font-semibold">
+                        {note.fields.front}
+                      </p>
+                      <p className="whitespace-pre-wrap break-words text-lg text-muted">{note.fields.back}</p>
+                    </div>
+                  )}
+
+                  {note.fields.extra && (
+                    <p className="mt-3 whitespace-pre-wrap break-words rounded-xl bg-butter-soft px-3 py-2 text-sm">
+                      <span className="mr-1.5 font-bold">Dica:</span>
+                      {note.fields.extra}
+                    </p>
+                  )}
                 </Card>
               </li>
             ))}
           </ul>
         )}
+
         {cursor && (
-          <Button variant="ghost" className="mt-4" onClick={() => void loadMore()}>
+          <Button variant="ghost" className="mt-5" onClick={() => void loadMore()}>
             Carregar mais
           </Button>
         )}

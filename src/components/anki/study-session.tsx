@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CardText, spokenText } from "@/components/anki/card-text";
+import { VoiceButton } from "@/components/anki/voice-button";
 import { CountChips } from "@/components/anki/count-chips";
 import { Mascot } from "@/components/mascot";
 import { Button, ButtonLink } from "@/components/ui/button";
@@ -28,14 +29,6 @@ function activeCounter(state: number): keyof DeckCounts {
   return state === 2 ? "review" : "learning";
 }
 
-function speak(text: string) {
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
-  utterance.rate = 0.9;
-  window.speechSynthesis.speak(utterance);
-}
-
 export function StudySession({
   deck,
   initial,
@@ -48,7 +41,6 @@ export function StudySession({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const [answered, setAnswered] = useState(0);
-  const canSpeak = useClientValue(() => "speechSynthesis" in window, false);
   const shownAt = useRef(0);
   const card = state.card;
 
@@ -164,15 +156,7 @@ export function StudySession({
             </>
           )}
         </div>
-        {canSpeak && (
-          <button
-            type="button"
-            onClick={() => speak(spokenText(side))}
-            className="mx-auto inline-flex items-center gap-2 rounded-pill px-4 py-2 text-sm font-semibold text-muted transition-colors hover:bg-surface-soft hover:text-foreground"
-          >
-            <span aria-hidden>🔊</span> Ouvir em inglês
-          </button>
-        )}
+        <VoiceButton text={spokenText(side)} />
       </Card>
 
       <p role="alert" className="mt-3 min-h-5 text-center text-sm font-semibold text-coral-edge">

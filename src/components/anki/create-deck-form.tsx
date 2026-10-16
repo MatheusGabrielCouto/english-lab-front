@@ -52,7 +52,7 @@ export function CreateDeckForm({
       <div className="flex-1">
         <Field
           id={fixedParentId ? "subdeck-name" : "deck-name"}
-          label={fixedParentId ? "Novo subbaralho" : "Novo baralho"}
+          label={fixedParentId ? "Nome do subbaralho" : "Novo baralho"}
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Ex.: Vocabulário"

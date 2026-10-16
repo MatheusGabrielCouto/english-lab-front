@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { CreateDeckForm } from "@/components/anki/create-deck-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
@@ -16,11 +15,27 @@ export function DeckSettings({ deck }: { deck: Deck }) {
   const [reviewsPerDay, setReviewsPerDay] = useState(String(deck.reviewsPerDay));
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string }>();
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   async function save(event: FormEvent) {
     event.preventDefault();
-    setPending(true);
     setMessage(undefined);
+
+    // valida aqui para o erro aparecer no campo certo, sem ir ao servidor
+    const errors: Record<string, string> = {};
+    if (!name.trim()) errors.name = "Dê um nome ao baralho";
+    for (const [field, value] of [
+      ["newPerDay", newPerDay],
+      ["reviewsPerDay", reviewsPerDay],
+    ] as const) {
+      if (!/^\d+$/.test(value.trim()) || Number(value) > 9999) {
+        errors[field] = "Informe um número inteiro de 0 a 9999";
+      }
+    }
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    setPending(true);
     try {
       await api(`/anki/decks/${deck.id}`, {
         method: "PATCH",
@@ -30,13 +45,14 @@ export function DeckSettings({ deck }: { deck: Deck }) {
           reviewsPerDay: Number(reviewsPerDay),
         },
       });
-      setMessage({ ok: true, text: "Salvo!" });
+      setMessage({ ok: true, text: "Configurações salvas!" });
       router.refresh();
     } catch (e) {
-      setMessage({
-        ok: false,
-        text: e instanceof ApiError ? (e.errors[0]?.message ?? e.message) : "Não consegui salvar.",
-      });
+      if (e instanceof ApiError && e.errors.length > 0) {
+        setFieldErrors(Object.fromEntries(e.errors.map((x) => [x.field, x.message])));
+      } else {
+        setMessage({ ok: false, text: e instanceof ApiError ? e.message : "Não consegui salvar. Tente de novo." });
+      }
     } finally {
       setPending(false);
     }
@@ -57,10 +73,10 @@ export function DeckSettings({ deck }: { deck: Deck }) {
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
+    <div className="mx-auto flex max-w-2xl flex-col gap-6">
       <Card>
         <h2 className="font-display text-2xl font-semibold">Configurações</h2>
-        <form onSubmit={save} className="mt-4 flex flex-col gap-4">
+        <form onSubmit={save} noValidate className="mt-5 flex flex-col gap-5">
           <Field
             id="deck-rename"
             label="Nome"
@@ -68,52 +84,65 @@ export function DeckSettings({ deck }: { deck: Deck }) {
             onChange={(e) => setName(e.target.value)}
             maxLength={80}
             required
+            error={fieldErrors.name}
           />
-          <div className="grid grid-cols-2 gap-4">
-            <Field
-              id="new-per-day"
-              label="Novos por dia"
-              type="number"
-              min={0}
-              max={9999}
-              inputMode="numeric"
-              value={newPerDay}
-              onChange={(e) => setNewPerDay(e.target.value)}
-              required
-            />
-            <Field
-              id="reviews-per-day"
-              label="Revisões por dia"
-              type="number"
-              min={0}
-              max={9999}
-              inputMode="numeric"
-              value={reviewsPerDay}
-              onChange={(e) => setReviewsPerDay(e.target.value)}
-              required
-            />
-          </div>
+
+          <fieldset className="flex flex-col gap-4 rounded-2xl bg-surface-soft p-4">
+            <legend className="px-2 font-display text-base font-semibold">Limites diários</legend>
+            <p className="-mt-1 text-sm text-muted text-pretty">
+              Valem para este baralho e seus subbaralhos. Para ir devagar no começo, mantenha
+              poucos cartões novos: as revisões se acumulam rápido.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                id="new-per-day"
+                label="Novos por dia"
+                type="number"
+                min={0}
+                max={9999}
+                inputMode="numeric"
+                value={newPerDay}
+                onChange={(e) => setNewPerDay(e.target.value)}
+                required
+                hint="Cartões que você vê pela primeira vez."
+                error={fieldErrors.newPerDay}
+              />
+              <Field
+                id="reviews-per-day"
+                label="Revisões por dia"
+                type="number"
+                min={0}
+                max={9999}
+                inputMode="numeric"
+                value={reviewsPerDay}
+                onChange={(e) => setReviewsPerDay(e.target.value)}
+                required
+                hint="Cartões que voltam para revisar."
+                error={fieldErrors.reviewsPerDay}
+              />
+            </div>
+          </fieldset>
+
           <p role="status" className={`min-h-5 text-sm font-semibold ${message?.ok ? "text-primary" : "text-coral-edge"}`}>
             {message?.text}
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div>
             <Button type="submit" disabled={pending}>
-              {pending ? "Salvando…" : "Salvar"}
-            </Button>
-            <Button type="button" variant="coral" onClick={() => void remove()}>
-              Apagar baralho
+              {pending ? "Salvando…" : "Salvar configurações"}
             </Button>
           </div>
         </form>
       </Card>
 
-      <Card tone="sky">
-        <h2 className="font-display text-2xl font-semibold">Subbaralho</h2>
-        <p className="mb-4 mt-1 text-muted text-pretty">
-          Organize em camadas, como <em>{deck.fullName}::Verbos</em>. Estudar o baralho
-          pai inclui os cartões dos filhos.
+      <Card tone="coral">
+        <h2 className="font-display text-xl font-semibold">Apagar baralho</h2>
+        <p className="mt-1 text-pretty">
+          Remove “{deck.fullName}”, todos os subbaralhos, cartões e o histórico de revisões.
+          Isso não pode ser desfeito.
         </p>
-        <CreateDeckForm fixedParentId={deck.id} />
+        <Button type="button" variant="coral" className="mt-4" onClick={() => void remove()}>
+          Apagar baralho
+        </Button>
       </Card>
     </div>
   );
