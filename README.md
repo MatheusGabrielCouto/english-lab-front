@@ -50,8 +50,7 @@ Rotas em `/anki`: baralhos, `/anki/cartoes` (buscar, editar, mover, suspender e 
 
 ### Leitor → Anki
 
-- Clique numa palavra (ou selecione uma expressão de até 8 palavras) no leitor: o popup mostra pronúncia, tradução, definições e a **frase do livro**
-  com a palavra destacada (Custom Highlight API, sem mexer no DOM do pdf.js). No celular vira uma folha na parte de baixo; `Esc`, rolagem, troca de página, zoom e clique fora fecham.
+- Clique numa palavra (ou selecione uma expressão de até 8 palavras) no leitor: o popup mostra pronúncia, tradução em destaque, a **frase do livro** com a palavra marcada e as definições (recolhidas, com "mais definições"); o botão **Adicionar ao Anki** fica num rodapé fixo, sempre à vista; `Enter` adiciona. A palavra marcada (Custom Highlight API, sem mexer no DOM do pdf.js). No celular vira uma folha na parte de baixo; `Esc`, rolagem, troca de página, zoom e clique fora fecham.
 - **Adicionar ao Anki:** cartão de *Palavra* (frente = palavra, verso = tradução) ou de *Lacuna na frase* (`{{c1::palavra}}`); a frase e `📖 Livro · p. N` vão no campo extra.
   O baralho padrão é `Livros › Título do livro`, criado sozinho; a escolha de tipo e baralho fica lembrada. Avisa se você já tem um cartão da palavra.
 - Achar a palavra e a frase (`src/lib/reading-context.ts`) e montar o cartão (`src/lib/word-cards.ts`) são funções puras com testes: `pnpm test`.

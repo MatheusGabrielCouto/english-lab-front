@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useEffectEvent, useMemo, useState, type CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import { api, ApiError } from "@/lib/api-client";
 import type { Deck, Note } from "@/lib/anki-types";
@@ -62,6 +62,8 @@ export function WordPopup({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<{ deckId: string; deckName: string }>();
   const [error, setError] = useState<string>();
+  const [showMore, setShowMore] = useState(false);
+  const [editDeck, setEditDeck] = useState(false);
 
   const voices = useEnglishVoices();
   const [speech] = useSpeechSettings();
@@ -106,6 +108,8 @@ export function WordPopup({
   const buildable = state.status === "ready" && canBuild(cardInput);
   const deckValue = deckChoice === "auto" || decks.some((deck) => deck.id === deckChoice) ? deckChoice : "auto";
   const autoDeckName = `Livros › ${book.title}`;
+  const currentDeckName =
+    deckValue === "auto" ? autoDeckName : (decks.find((deck) => deck.id === deckValue)?.fullName.split("::").join(" › ") ?? autoDeckName);
 
   const alreadyHave = useMemo(() => {
     return existing.filter((note) => coversWord(note.fields, target.text));
@@ -141,14 +145,14 @@ export function WordPopup({
   /* ---------- posição: abaixo da palavra se couber, senão acima (ou folha no celular) ---------- */
   const sheet = target.viewport.width < SHEET_BREAKPOINT;
   const style: CSSProperties = sheet
-    ? { maxHeight: "78dvh" }
+    ? { maxHeight: "82dvh" }
     : (() => {
         const { rect, viewport } = target;
         const width = Math.min(POPUP_WIDTH, viewport.width - 16);
         const left = Math.min(Math.max(8, rect.left + rect.width / 2 - width / 2), viewport.width - width - 8);
         const below = viewport.height - rect.bottom - 16;
         const above = rect.top - 16;
-        return below >= 320 || below >= above
+        return below >= 360 || below >= above
           ? { left, width, top: rect.bottom + 8, maxHeight: below }
           : { left, width, bottom: viewport.height - rect.top + 8, maxHeight: above };
       })();
@@ -157,194 +161,284 @@ export function WordPopup({
   const phonetic = data?.phonetic ?? data?.lemma?.phonetic;
   const sentence = target.sentence;
 
+  // recolhido: 2 classes gramaticais × 1 definição; aberto: tudo (até 4 por classe), com exemplos
+  const shownMeanings = showMore ? meanings : meanings.slice(0, 2);
+  const hiddenCount =
+    meanings.reduce((sum, meaning) => sum + Math.min(meaning.definitions.length, 4), 0) -
+    shownMeanings.reduce((sum, meaning) => sum + (showMore ? Math.min(meaning.definitions.length, 4) : 1), 0);
+
+  // Enter adiciona (a não ser que o foco esteja num botão, link ou lista)
+  const onEnter = useEffectEvent((event: KeyboardEvent) => {
+    const el = event.target;
+    if (el instanceof HTMLElement && el.closest("button, a, select, input, textarea")) return;
+    if (!saved && buildable && !saving) {
+      event.preventDefault();
+      void add();
+    }
+  });
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => event.key === "Enter" && onEnter(event);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const speakable = voices.length > 0;
+  const pronunciation = phonetic ? (
+    <span className="font-mono text-sm">{phonetic}</span>
+  ) : null;
+
   return (
     <div
       role="dialog"
       aria-label={`Significado de ${target.text}`}
       onPointerDown={(event) => event.stopPropagation()}
       className={cn(
-        "fixed z-40 flex flex-col overflow-y-auto border-2 border-border bg-surface p-4 shadow-2xl",
-        sheet ? "inset-x-0 bottom-0 rounded-t-card border-b-0" : "rounded-card",
+        "fixed z-40 flex flex-col overflow-hidden border-2 border-border bg-surface shadow-2xl",
+        sheet
+          ? "inset-x-0 bottom-0 rounded-t-card border-b-0 motion-safe:animate-[sheet-in_180ms_ease-out]"
+          : "rounded-card motion-safe:animate-[popup-in_140ms_ease-out]",
       )}
       style={style}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="break-words font-display text-2xl font-semibold leading-tight">{target.text}</h2>
-          {phonetic && <p className="mt-0.5 text-sm text-muted">{phonetic}</p>}
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          {voices.length > 0 && (
+      {sheet && <span aria-hidden className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-pill bg-border" />}
+
+      {/* cabeçalho: a palavra com a pronúncia ao lado (toque para ouvir) e fechar */}
+      <header className="flex shrink-0 items-start justify-between gap-3 px-4 pt-3 pb-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+          <h2 className="break-words font-display text-2xl leading-tight font-semibold">{target.text}</h2>
+          {speakable ? (
             <button
               type="button"
               onClick={() => speak(target.text, speech, voices)}
               aria-label={`Ouvir “${target.text}” em inglês`}
-              className="grid size-9 place-items-center rounded-pill text-lg transition-colors hover:bg-surface-soft"
+              className="inline-flex items-center gap-1.5 rounded-pill bg-sky-soft px-2.5 py-0.5 text-sm font-semibold transition-colors hover:bg-sky/40"
             >
               <span aria-hidden>🔊</span>
+              {pronunciation ?? <span>Ouvir</span>}
             </button>
+          ) : (
+            pronunciation && <span className="text-muted">{pronunciation}</span>
           )}
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fechar"
-            className="grid size-9 place-items-center rounded-pill text-lg font-bold text-muted transition-colors hover:bg-surface-soft hover:text-foreground"
-          >
-            ×
-          </button>
         </div>
-      </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Fechar"
+          className="grid size-8 shrink-0 place-items-center rounded-pill text-xl font-bold text-muted transition-colors hover:bg-surface-soft hover:text-foreground"
+        >
+          ×
+        </button>
+      </header>
 
-      {state.status === "loading" && (
-        <div role="status" aria-label="Buscando" className="mt-4 flex flex-col gap-2">
-          <div className="h-7 w-2/3 animate-pulse rounded-lg bg-surface-soft" />
-          <div className="h-4 w-full animate-pulse rounded-lg bg-surface-soft" />
-          <div className="h-4 w-5/6 animate-pulse rounded-lg bg-surface-soft" />
-        </div>
-      )}
+      {/* corpo: rola quando o conteúdo é grande; o rodapé não sai do lugar */}
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3">
+        {state.status === "loading" && (
+          <div role="status" aria-label="Buscando" className="mt-2 flex flex-col gap-2">
+            <div className="h-16 animate-pulse rounded-2xl bg-surface-soft" />
+            <div className="h-4 w-full animate-pulse rounded-lg bg-surface-soft" />
+            <div className="h-4 w-5/6 animate-pulse rounded-lg bg-surface-soft" />
+          </div>
+        )}
 
-      {state.status === "error" && (
-        <div role="alert" className="mt-4 rounded-2xl bg-coral-soft p-3 text-sm">
-          <p className="font-semibold">Não consegui buscar agora.</p>
-          <Button variant="ghost" className="mt-2 h-9 px-4 text-sm" onClick={() => { setState({ status: "loading" }); setAttempt((n) => n + 1); }}>
-            Tentar de novo
-          </Button>
-        </div>
-      )}
+        {state.status === "error" && (
+          <div role="alert" className="mt-2 rounded-2xl bg-coral-soft p-3 text-sm">
+            <p className="font-semibold">Não consegui buscar agora.</p>
+            <Button
+              variant="ghost"
+              className="mt-2 h-9 px-4 text-sm"
+              onClick={() => {
+                setState({ status: "loading" });
+                setAttempt((n) => n + 1);
+              }}
+            >
+              Tentar de novo
+            </Button>
+          </div>
+        )}
 
-      {data && (
-        <>
-          {/* tradução */}
-          <section className="mt-3">
-            {data.translation ? (
-              <>
-                <p className="font-display text-xl font-semibold text-primary">{data.translation.text}</p>
-                {data.translation.note && <p className="mt-1 text-sm">{data.translation.note}</p>}
-                {data.translation.definition && (
-                  <p className="mt-1 text-sm text-muted">
+        {data && (
+          <>
+            {/* tradução em destaque */}
+            <section aria-label="Tradução" className="rounded-2xl bg-primary-soft px-4 py-2.5">
+              {data.translation ? (
+                <>
+                  <p className="font-display text-2xl leading-tight font-semibold text-balance">{data.translation.text}</p>
+                  {data.translation.note && <p className="mt-1.5 text-sm text-pretty">{data.translation.note}</p>}
+                </>
+              ) : (
+                <p className="text-sm text-muted">Tradução indisponível agora.</p>
+              )}
+              {data.lemma && (
+                <p className="mt-2 inline-block rounded-pill bg-surface px-3 py-0.5 text-xs font-bold text-muted">
+                  forma de <span className="text-foreground">{data.lemma.word}</span>
+                </p>
+              )}
+            </section>
+
+            {/* a frase do livro, com a palavra marcada, e o sentido nela */}
+            {sentence && (
+              <figure className="mt-3">
+                <figcaption className="mb-1 text-xs font-bold tracking-wide text-muted uppercase">No livro</figcaption>
+                <blockquote className="rounded-2xl bg-surface-soft px-3 py-2.5 text-sm leading-relaxed">
+                  {sentence.sentence.slice(0, sentence.wordIndex)}
+                  <mark className="rounded bg-butter px-0.5 text-ink">
+                    {sentence.sentence.slice(sentence.wordIndex, sentence.wordIndex + target.text.length)}
+                  </mark>
+                  {sentence.sentence.slice(sentence.wordIndex + target.text.length)}
+                </blockquote>
+                {data.translation?.definition && (
+                  <p className="mt-1.5 text-sm text-muted">
                     <span className="font-semibold text-foreground">Aqui:</span> {data.translation.definition}
                   </p>
                 )}
-              </>
-            ) : (
-              <p className="text-sm text-muted">Tradução indisponível agora.</p>
+              </figure>
             )}
-          </section>
 
-          {/* dicionário */}
-          {data.lemma && (
-            <p className="mt-3 rounded-2xl bg-lavender-soft px-3 py-1.5 text-sm">
-              Forma de <strong>{data.lemma.word}</strong>
-            </p>
-          )}
-          {meanings.length > 0 ? (
-            <ul className="mt-3 flex flex-col gap-2.5">
-              {meanings.map((meaning) => (
-                <li key={meaning.partOfSpeech}>
-                  <p className="text-xs font-bold uppercase tracking-wide text-muted">{meaning.partOfSpeech}</p>
-                  <ol className="mt-0.5 list-decimal pl-5 text-sm">
-                    {meaning.definitions.slice(0, 2).map((definition) => (
-                      <li key={definition.definition} className="mt-0.5">
-                        {definition.definition}
-                        {definition.example && <span className="block italic text-muted">“{definition.example}”</span>}
-                      </li>
-                    ))}
-                  </ol>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            data.kind === "word" && (
-              <p className="mt-3 text-sm text-muted">
-                {data.status.dictionary === "unavailable"
-                  ? "O dicionário está fora do ar no momento."
-                  : "Não encontrei esta palavra no dicionário."}
-              </p>
-            )
-          )}
-
-          {/* a frase do livro */}
-          {sentence && (
-            <blockquote className="mt-3 rounded-2xl bg-surface-soft px-3 py-2 text-sm">
-              {sentence.sentence.slice(0, sentence.wordIndex)}
-              <mark className="rounded bg-butter px-0.5 text-ink">
-                {sentence.sentence.slice(sentence.wordIndex, sentence.wordIndex + target.text.length)}
-              </mark>
-              {sentence.sentence.slice(sentence.wordIndex + target.text.length)}
-            </blockquote>
-          )}
-
-          {/* Anki */}
-          <section aria-label="Adicionar ao Anki" className="mt-4 border-t-2 border-border pt-3">
-            {saved ? (
-              <div role="status" className="rounded-2xl bg-primary-soft px-3 py-3">
-                <p className="font-display text-lg font-semibold">Adicionado ao Anki! ✓</p>
-                <p className="mt-0.5 text-sm text-muted">{saved.deckName}</p>
-                <Link href={`/anki/baralho/${saved.deckId}`} target="_blank" className="mt-1 inline-block text-sm font-bold text-primary underline-offset-4 hover:underline">
-                  Ver o baralho
-                </Link>
-              </div>
-            ) : (
-              <>
-                {alreadyHave.length > 0 && (
-                  <p className="mb-2 rounded-2xl bg-butter-soft px-3 py-1.5 text-sm">
-                    Você já tem {alreadyHave.length === 1 ? "um cartão" : `${alreadyHave.length} cartões`} com esta palavra.
-                  </p>
-                )}
-
-                {target.kind === "word" && hasSentence && (
-                  <div role="radiogroup" aria-label="Tipo de cartão" className="mb-2 flex gap-1.5">
-                    {CARD_TYPES.map((option) => (
-                      <button
-                        key={option}
-                        type="button"
-                        role="radio"
-                        aria-checked={kind === option}
-                        onClick={() => setCardType(option)}
-                        className={cn(
-                          "flex-1 rounded-pill border-2 px-3 py-1 text-sm font-bold transition-colors",
-                          kind === option
-                            ? "border-foreground bg-foreground text-background"
-                            : "border-border bg-surface text-muted hover:border-sky hover:text-foreground",
-                        )}
-                      >
-                        {option === "word" ? "Palavra" : "Lacuna na frase"}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <label className="flex flex-col gap-1 text-sm font-semibold">
-                  Baralho
-                  <select
-                    value={deckValue}
-                    onChange={(event) => setDeckChoice(event.target.value)}
-                    className="h-10 rounded-xl border-2 border-border bg-surface px-3 font-normal hover:border-sky focus-visible:border-sky focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky/30"
+            {/* dicionário */}
+            {meanings.length > 0 ? (
+              <section aria-label="Definições" className="mt-4">
+                <ul className="flex flex-col gap-3">
+                  {shownMeanings.map((meaning) => (
+                    <li key={meaning.partOfSpeech}>
+                      <p className="inline-block rounded-pill bg-lavender-soft px-2.5 py-0.5 text-xs font-bold tracking-wide uppercase">
+                        {meaning.partOfSpeech}
+                      </p>
+                      <ol className="mt-1 list-decimal pl-5 text-sm marker:text-muted">
+                        {meaning.definitions.slice(0, showMore ? 4 : 1).map((definition) => (
+                          <li key={definition.definition} className="mt-1 text-pretty">
+                            {definition.definition}
+                            {showMore && definition.example && (
+                              <span className="block text-muted italic">“{definition.example}”</span>
+                            )}
+                          </li>
+                        ))}
+                      </ol>
+                    </li>
+                  ))}
+                </ul>
+                {(hiddenCount > 0 || showMore) && (
+                  <button
+                    type="button"
+                    onClick={() => setShowMore((value) => !value)}
+                    aria-expanded={showMore}
+                    className="mt-3 text-sm font-bold text-primary underline-offset-4 hover:underline"
                   >
-                    <option value="auto">{autoDeckName}</option>
-                    {decks.map((deck) => (
-                      <option key={deck.id} value={deck.id}>
-                        {deck.fullName.split("::").join(" › ")}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    {showMore ? "Mostrar menos" : `Mais definições (${hiddenCount})`}
+                  </button>
+                )}
+              </section>
+            ) : (
+              data.kind === "word" && (
+                <p className="mt-4 text-sm text-muted">
+                  {data.status.dictionary === "unavailable"
+                    ? "O dicionário está fora do ar no momento."
+                    : "Não encontrei esta palavra no dicionário."}
+                </p>
+              )
+            )}
+          </>
+        )}
+      </div>
 
-                <p role="alert" className="mt-1 min-h-5 text-sm font-semibold text-coral-edge">
+      {/* Anki: sempre à vista, mesmo com o corpo rolando */}
+      {data && (
+        <footer
+          aria-label="Adicionar ao Anki"
+          className="shrink-0 border-t-2 border-border bg-surface px-4 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+        >
+          {saved ? (
+            <div role="status" className="flex items-center justify-between gap-3 rounded-2xl bg-primary-soft px-4 py-3">
+              <div className="min-w-0">
+                <p className="font-display text-lg leading-tight font-semibold">Adicionado ao Anki ✓</p>
+                <p className="truncate text-sm text-muted">{saved.deckName}</p>
+              </div>
+              <Link
+                href={`/anki/baralho/${saved.deckId}`}
+                target="_blank"
+                className="shrink-0 text-sm font-bold text-primary underline-offset-4 hover:underline"
+              >
+                Ver baralho
+              </Link>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {alreadyHave.length > 0 && (
+                <p className="rounded-2xl bg-butter-soft px-3 py-1.5 text-sm">
+                  Você já tem {alreadyHave.length === 1 ? "um cartão" : `${alreadyHave.length} cartões`} com esta palavra.
+                </p>
+              )}
+
+              {target.kind === "word" && hasSentence && (
+                <div role="radiogroup" aria-label="Tipo de cartão" className="grid grid-cols-2 gap-1 rounded-pill bg-surface-soft p-0.5">
+                  {CARD_TYPES.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      role="radio"
+                      aria-checked={kind === option}
+                      onClick={() => setCardType(option)}
+                      className={cn(
+                        "rounded-pill px-3 py-1 text-sm font-bold transition-colors",
+                        kind === option ? "bg-foreground text-background" : "text-muted hover:text-foreground",
+                      )}
+                    >
+                      {option === "word" ? "Palavra" : "Lacuna na frase"}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <Button className="w-full" onClick={() => void add()} disabled={saving || !buildable}>
+                {saving ? "Salvando…" : "Adicionar ao Anki"}
+              </Button>
+
+              {error && (
+                <p role="alert" className="text-sm font-semibold text-coral-edge">
                   {error}
                 </p>
-                <Button className="w-full" onClick={() => void add()} disabled={saving || !buildable}>
-                  {saving ? "Salvando…" : "Adicionar ao Anki"}
-                </Button>
-                {!buildable && state.status === "ready" && (
-                  <p className="mt-1 text-center text-xs text-muted">
-                    {kind === "cloze" ? "Não achei a frase para criar a lacuna." : "Sem tradução nem definição para o verso."}
+              )}
+              {!buildable && state.status === "ready" && (
+                <p className="text-center text-xs text-muted">
+                  {kind === "cloze" ? "Não achei a frase para criar a lacuna." : "Sem tradução nem definição para o verso."}
+                </p>
+              )}
+
+              {/* baralho: uma linha discreta; só abre o seletor se você quiser trocar */}
+              <div className="text-xs text-muted">
+                {editDeck ? (
+                  <label className="flex flex-col gap-1 font-semibold">
+                    Baralho
+                    <select
+                      value={deckValue}
+                      onChange={(event) => setDeckChoice(event.target.value)}
+                      className="h-10 rounded-xl border-2 border-border bg-surface px-3 font-normal text-foreground hover:border-sky focus-visible:border-sky focus-visible:ring-4 focus-visible:ring-sky/30 focus-visible:outline-none"
+                    >
+                      <option value="auto">{autoDeckName}</option>
+                      {decks.map((deck) => (
+                        <option key={deck.id} value={deck.id}>
+                          {deck.fullName.split("::").join(" › ")}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <p className="flex items-center justify-between gap-2">
+                    <span className="min-w-0 truncate">
+                      Em: <span className="font-semibold text-foreground">{currentDeckName}</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setEditDeck(true)}
+                      className="shrink-0 font-bold text-primary underline-offset-4 hover:underline"
+                    >
+                      trocar
+                    </button>
                   </p>
                 )}
-              </>
-            )}
-          </section>
-        </>
+              </div>
+            </div>
+          )}
+        </footer>
       )}
     </div>
   );
