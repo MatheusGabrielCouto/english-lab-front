@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
 
 const links = [
@@ -14,15 +15,23 @@ const links = [
 /** Navegação interna do módulo Anki. Some durante a sessão de estudo, para não distrair. */
 export function AnkiNav() {
   const pathname = usePathname();
+  const current = useRef<HTMLAnchorElement>(null);
+
+  // no celular a lista rola: garante que a seção atual esteja à vista
+  useEffect(() => {
+    current.current?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [pathname]);
+
   if (pathname.startsWith("/anki/estudar")) return null;
 
   return (
-    <nav aria-label="Seções do Anki" className="-mx-1 mb-6 flex gap-1 overflow-x-auto px-1 pb-1">
+    <nav aria-label="Seções do Anki" className="-mx-1 mb-6 flex gap-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {links.map((link) => {
         const active = link.match(pathname);
         return (
           <Link
             key={link.href}
+            ref={active ? current : undefined}
             href={link.href}
             aria-current={active ? "page" : undefined}
             className={cn(

@@ -343,12 +343,23 @@ export function PdfReader({ book }: { book: Book }) {
             href="/biblioteca"
             className="shrink-0 rounded-pill px-3 py-1.5 font-semibold text-muted transition-colors hover:bg-surface-soft hover:text-foreground"
           >
-            ← Biblioteca
+            <span aria-hidden>←</span>
+            <span className="sr-only sm:not-sr-only"> Biblioteca</span>
           </Link>
           <div className="min-w-0 flex-1 basis-40">
             <h1 className="truncate font-display text-lg font-semibold leading-tight">{book.title}</h1>
             {book.author && <p className="truncate text-sm text-muted">{book.author}</p>}
           </div>
+
+          {/* no celular o tema vira um botão que alterna, para a barra caber em duas linhas */}
+          <button
+            type="button"
+            onClick={() => setTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length])}
+            aria-label={`Tema de leitura: ${THEME_LABEL[theme]}. Tocar para trocar`}
+            className="rounded-pill border-2 border-border bg-surface px-3 py-1 text-sm font-bold sm:hidden"
+          >
+            {THEME_LABEL[theme]}
+          </button>
 
           <div className="flex items-center gap-1.5" role="group" aria-label="Navegação de páginas">
             <Button variant="ghost" className="h-9 px-3" onClick={() => go(page - 1)} disabled={page <= 1} aria-label="Página anterior">
@@ -381,7 +392,7 @@ export function PdfReader({ book }: { book: Book }) {
             </Button>
           </div>
 
-          <div role="radiogroup" aria-label="Tema de leitura" className="flex gap-1">
+          <div role="radiogroup" aria-label="Tema de leitura" className="hidden gap-1 sm:flex">
             {THEMES.map((option) => (
               <button
                 key={option}

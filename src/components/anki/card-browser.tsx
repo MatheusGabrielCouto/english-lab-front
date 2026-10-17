@@ -167,8 +167,8 @@ export function CardBrowser({
             className={cn(CONTROL, "h-12 w-full")}
           />
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="flex flex-col gap-1 text-sm font-semibold">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <label className="col-span-2 flex flex-col gap-1 text-sm font-semibold sm:col-span-1">
             Baralho
             <select value={filters.deckId} onChange={(e) => set("deckId", e.target.value)} className={CONTROL}>
               <option value="">Todos</option>
@@ -201,7 +201,7 @@ export function CardBrowser({
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-sm font-semibold">
+          <label className="col-span-2 flex flex-col gap-1 text-sm font-semibold sm:col-span-1">
             Tag
             <input
               value={filters.tag}

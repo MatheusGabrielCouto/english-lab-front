@@ -99,7 +99,7 @@ function UnitSection({ level, unit, nextLessonId }: { level: Level; unit: TrailU
             </h3>
             {unit.description && <p className="text-pretty text-muted">{unit.description}</p>}
           </div>
-          <div className="flex flex-col items-end gap-1.5 text-sm font-bold text-muted">
+          <div className="flex w-full flex-row items-center justify-between gap-3 text-sm font-bold text-muted sm:w-auto sm:flex-col sm:items-end sm:justify-start sm:gap-1.5">
             {statusLabel[status] && (
               <span
                 className={cn(

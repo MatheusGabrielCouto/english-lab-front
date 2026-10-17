@@ -38,7 +38,7 @@ export function DeckTabs({ tabs }: { tabs: DeckTab[] }) {
       <div
         role="tablist"
         aria-label="Seções do baralho"
-        className="flex gap-1 overflow-x-auto border-b-2 border-border"
+        className="flex gap-1 overflow-x-auto border-b-2 border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {tabs.map((tab, index) => {
           const selected = tab.id === active;

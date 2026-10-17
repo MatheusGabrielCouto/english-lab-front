@@ -1,12 +1,7 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { AppNav, AppNavFallback } from "@/components/app-nav";
 import { LogoutButton } from "@/components/auth/logout-button";
-
-const links = [
-  { href: "/painel", label: "Painel" },
-  { href: "/trilha", label: "Trilha" },
-  { href: "/anki", label: "Anki" },
-  { href: "/biblioteca", label: "Biblioteca" },
-];
 
 /** Cabeçalho das áreas logadas. Estático: não depende da sessão. */
 export function AppHeader() {
@@ -22,20 +17,9 @@ export function AppHeader() {
         <span className="hidden sm:inline">English Lab</span>
       </Link>
       {/* no celular o menu desce para uma segunda linha, para caber todos os links */}
-      <nav
-        aria-label="Principal"
-        className="order-3 -mx-3 flex w-full items-center gap-1 overflow-x-auto sm:order-2 sm:mx-0 sm:w-auto"
-      >
-        {links.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className="rounded-pill px-4 py-2 font-semibold whitespace-nowrap text-muted transition-colors hover:bg-surface-soft hover:text-foreground"
-          >
-            {link.label}
-          </Link>
-        ))}
-      </nav>
+      <Suspense fallback={<AppNavFallback />}>
+        <AppNav />
+      </Suspense>
       <div className="order-2 ml-auto sm:order-3">
         <LogoutButton />
       </div>
