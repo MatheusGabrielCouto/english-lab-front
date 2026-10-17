@@ -117,6 +117,7 @@ function UnitCard({ level, unit, nextLessonId }: { level: Level; unit: TrailUnit
 
 /** Níveis → unidades → lições. Níveis sem conteúdo aparecem como "em breve". */
 export function TrailMap({ overview }: { overview: TrailOverview }) {
+  const startLevel = overview.placement?.level ?? null;
   const byLevel = new Map(overview.levels.map((entry) => [entry.level, entry.units]));
   const nextLessonId = overview.levels
     .flatMap((entry) => entry.units)
@@ -132,6 +133,9 @@ export function TrailMap({ overview }: { overview: TrailOverview }) {
             <h2 id={`level-${level}`} className="flex items-center gap-3 font-display text-3xl font-semibold">
               <span className="rounded-pill bg-foreground px-3 py-0.5 text-xl text-background">{level}</span>
               {name}
+              {level === startLevel && (
+                <span className="rounded-pill bg-butter px-3 py-0.5 text-sm font-bold text-ink">Você começa aqui</span>
+              )}
             </h2>
             {units.length === 0 ? (
               <p className="mt-3 rounded-card border-2 border-dashed border-border px-6 py-5 text-muted">

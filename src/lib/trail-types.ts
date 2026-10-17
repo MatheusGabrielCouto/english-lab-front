@@ -40,8 +40,12 @@ export type TrailUnit = {
   lessons: TrailLesson[];
 };
 
+export type PlacementSummary = { level: Level; score: number; createdAt: string };
+
 export type TrailOverview = {
   stats: TrailStats;
+  /** resultado mais recente do teste de nível, se houver */
+  placement: PlacementSummary | null;
   next: { level: Level; unit: string; lesson: string; title: string } | null;
   levels: { level: Level; units: TrailUnit[] }[];
 };
@@ -89,3 +93,22 @@ export type FinishResult = {
   totalXp: number;
   streak: Streak;
 };
+
+/* ---------- teste de nível ---------- */
+
+export type PlacementData = {
+  questions: PublicExercise[];
+  result: (PlacementSummary & { perLevel: Record<string, { correct: number; total: number }> }) | null;
+};
+
+export type PlacementOutcome = {
+  level: Level;
+  score: number;
+  correct: number;
+  total: number;
+  perLevel: { level: Level; correct: number; total: number }[];
+};
+
+/** Posição do nível na escada A1…C2 (para comparar níveis). */
+export const levelIndex = (level: Level) => LEVELS.findIndex((entry) => entry.level === level);
+export const levelName = (level: Level) => LEVELS.find((entry) => entry.level === level)?.name ?? level;

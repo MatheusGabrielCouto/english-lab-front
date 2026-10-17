@@ -3,8 +3,9 @@ import { Suspense } from "react";
 import { StatsStrip } from "@/components/trail/stats-strip";
 import { TrailMap } from "@/components/trail/trail-map";
 import { ButtonLink } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { serverApi } from "@/lib/api-server";
-import type { TrailOverview } from "@/lib/trail-types";
+import { levelIndex, levelName, type TrailOverview } from "@/lib/trail-types";
 
 export const metadata: Metadata = { title: "Trilha de aulas" };
 
@@ -37,6 +38,7 @@ async function Overview() {
   return (
     <>
       <StatsStrip stats={overview.stats} className="mt-8" />
+      <PlacementBanner overview={overview} />
 
       {overview.next && (
         <div className="mt-6 flex flex-wrap items-center gap-4">
@@ -53,5 +55,43 @@ async function Overview() {
         <TrailMap overview={overview} />
       </div>
     </>
+  );
+}
+
+/** Convite ao teste de nível; depois dele, o nível do aluno e (se for o caso) o aviso de que as lições ainda não existem. */
+function PlacementBanner({ overview }: { overview: TrailOverview }) {
+  const { placement } = overview;
+
+  if (!placement) {
+    return (
+      <Card tone="butter" className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="font-display text-xl font-semibold">Já estuda inglês?</h2>
+          <p className="mt-1 text-pretty text-muted">Faça o teste de nível (uns 10 minutos) e comece do ponto certo.</p>
+        </div>
+        <ButtonLink href="/nivelamento" variant="butter" className="shrink-0">
+          Fazer o teste
+        </ButtonLink>
+      </Card>
+    );
+  }
+
+  const highest = Math.max(...overview.levels.map((entry) => levelIndex(entry.level)), -1);
+  const missing = levelIndex(placement.level) > highest;
+
+  return (
+    <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+      <p className="rounded-pill bg-butter-soft px-4 py-1.5 font-bold">
+        Seu nível: {placement.level} · {levelName(placement.level)}
+      </p>
+      <ButtonLink href="/nivelamento" variant="ghost" className="h-9 px-4 text-sm">
+        Refazer o teste
+      </ButtonLink>
+      {missing && (
+        <p className="w-full text-pretty text-muted">
+          As lições de {placement.level} chegam em breve. Enquanto isso, revise o que já está aqui.
+        </p>
+      )}
+    </div>
   );
 }

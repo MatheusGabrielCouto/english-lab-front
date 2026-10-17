@@ -63,3 +63,8 @@ Rotas em `/anki`: baralhos, `/anki/cartoes` (buscar, editar, mover, suspender e 
 - Cinco tipos de exercício: múltipla escolha (com áudio), lacuna (tocar ou digitar), montar a frase, tradução e ditado (usa a voz do navegador, normal e devagar).
 - Ao concluir: estrelas, XP, streak e as **palavras da lição**, com um botão que cria os cartões no Anki (`Trilha › A1 › Unidade`).
 - O fluxo da fila (`src/lib/lesson-flow.ts`) e a montagem dos cartões de vocabulário (`src/lib/lesson-vocab.ts`) são funções puras com testes (`pnpm test`).
+
+### Teste de nível
+
+- `/nivelamento`: 30 perguntas de A1 a C1, uma por vez, **sem correção no meio** e com "Não sei" (conta como errada, mas evita chute). No fim mostra o nível em que começar e os acertos por nível; dá para refazer.
+- Na trilha: convite ao teste para quem ainda não fez, selo "Seu nível" (com aviso se ainda não há lições ali) e "Você começa aqui" no título do nível. O botão "Continuar" respeita o nível.
