@@ -69,7 +69,8 @@ Rotas em `/anki`: baralhos, `/anki/cartoes` (buscar, editar, mover, suspender e 
 - `/aprender/[nível]/[unidade]/[lição]`: tela cheia, um exercício por vez, com atalhos (`1`–`6` escolhem, `Enter` verifica e continua). O que você erra **volta no fim** da fila até acertar (a nota só considera a primeira resposta, corrigida no servidor).
 - Perguntas de **leitura** (`Leia: “texto” pergunta`) aparecem com o texto num cartão próprio, com botão de ouvir.
 - Cinco tipos de exercício: múltipla escolha (com áudio), lacuna (tocar ou digitar), montar a frase, tradução e ditado (usa a voz do navegador, normal e devagar).
-- Ao concluir: estrelas, XP, streak e as **palavras da lição**, com um botão que cria os cartões no Anki (`Trilha › A1 › Unidade`).
+- **Explicação antes dos exercícios:** na primeira vez (lição ainda sem nota), a tela de **estudo** abre sozinha, com seções, tabelas, exemplos com 🔊, 💡 dicas e ⚠️ cuidados, e o botão "Começar os exercícios". Durante a lição, o botão **📖 Explicação** reabre o texto por cima, sem perder a resposta em andamento. Componentes em `src/components/trail/study-view.tsx`; o texto aceita **negrito** (`src/lib/rich-text.ts`).
+- Ao concluir: estrelas, XP, streak, o cartão **Para fixar** (dicas da lição), "Rever a explicação" e as **palavras da lição**, com um botão que cria os cartões no Anki (`Trilha › A1 › Unidade`).
 - O fluxo da fila (`src/lib/lesson-flow.ts`) e a montagem dos cartões de vocabulário (`src/lib/lesson-vocab.ts`) são funções puras com testes (`pnpm test`).
 
 ### Teste de nível

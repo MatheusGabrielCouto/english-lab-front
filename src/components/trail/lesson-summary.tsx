@@ -1,5 +1,6 @@
 "use client";
 
+import { StudySections, TipsCard } from "@/components/trail/study-view";
 import { VocabToAnki } from "@/components/trail/vocab-to-anki";
 import { Mascot } from "@/components/mascot";
 import { Button, ButtonLink } from "@/components/ui/button";
@@ -65,6 +66,28 @@ export function LessonSummary({
             ? `Você já estudou hoje: a sequência segue em ${result.streak.current} ${days}.`
             : "Repetir a lição rende metade do XP, mas treina de verdade."}
       </p>
+
+      {lesson.study && (
+        <div className="mt-8 w-full text-left">
+          <TipsCard tips={lesson.study.tips} />
+          <details className="group mt-4 rounded-card border-2 border-border bg-surface">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 font-display text-lg font-semibold [&::-webkit-details-marker]:hidden">
+              Rever a explicação
+              <span aria-hidden className="text-muted transition-transform group-open:rotate-180">
+                ▾
+              </span>
+            </summary>
+            <div className="border-t-2 border-border px-5 py-5">
+              <StudySections study={lesson.study} />
+            </div>
+          </details>
+          {result.correct < result.total && (
+            <p className="mt-3 text-pretty text-muted">
+              Errou algum? Releia a explicação acima e refaça a lição para fixar.
+            </p>
+          )}
+        </div>
+      )}
 
       <VocabToAnki lesson={lesson} />
 

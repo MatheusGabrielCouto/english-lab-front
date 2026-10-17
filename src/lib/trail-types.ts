@@ -59,6 +59,23 @@ export type PublicExercise =
   | { key: string; type: "TRANSLATION"; prompt: string; from: "pt" | "en" }
   | { key: string; type: "DICTATION"; speak: string };
 
+/** A explicação de uma lição: `sections` antes dos exercícios, `tips` ("para fixar") depois. */
+export type Study = {
+  intro: string;
+  /** o essencial em poucas linhas, mostrado no topo da explicação */
+  summary?: string[];
+  sections: {
+    title: string;
+    /** parágrafos separados por linha em branco; **negrito** */
+    text: string;
+    examples?: { en: string; pt: string }[];
+    table?: { head: string[]; rows: string[][] };
+    tip?: string;
+    warn?: string;
+  }[];
+  tips: string[];
+};
+
 export type LessonData = {
   id: string;
   slug: string;
@@ -67,6 +84,7 @@ export type LessonData = {
   xp: number;
   unit: { slug: string; title: string; emoji: string | null; level: Level };
   vocab: { front: string; back: string }[];
+  study: Study | null;
   nextLesson: { slug: string; title: string } | null;
   bestScore: number | null;
   exercises: PublicExercise[];

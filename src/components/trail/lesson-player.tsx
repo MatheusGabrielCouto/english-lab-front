@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { ExerciseView } from "@/components/trail/exercise-views";
 import { LessonSummary } from "@/components/trail/lesson-summary";
+import { StudyScreen } from "@/components/trail/study-view";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ApiError, api } from "@/lib/api-client";
@@ -16,10 +17,12 @@ const PRAISE = ["Muito bem!", "Isso aí!", "Perfeito!", "Mandou bem!", "Boa!"];
 /** Troca o `key` para recomeçar a lição do zero (nova tentativa, nova fila). */
 export function LessonPlayer({ lesson }: { lesson: LessonData }) {
   const [run, setRun] = useState(0);
-  return <Run key={run} lesson={lesson} onRestart={() => setRun((value) => value + 1)} />;
+  // a explicação abre sozinha na primeira vez; ao refazer ou repetir, o aluno vai direto aos exercícios
+  const showStudy = run === 0 && lesson.bestScore === null;
+  return <Run key={run} lesson={lesson} showStudy={showStudy} onRestart={() => setRun((value) => value + 1)} />;
 }
 
-function Run({ lesson, onRestart }: { lesson: LessonData; onRestart: () => void }) {
+function Run({ lesson, showStudy, onRestart }: { lesson: LessonData; showStudy: boolean; onRestart: () => void }) {
   const exercises = useMemo(() => new Map(lesson.exercises.map((exercise) => [exercise.key, exercise])), [lesson.exercises]);
   const [flow, setFlow] = useState(() => startFlow(lesson.exercises.map((exercise) => exercise.key)));
   const [answer, setAnswer] = useState<unknown>(null);
@@ -27,6 +30,8 @@ function Run({ lesson, onRestart }: { lesson: LessonData; onRestart: () => void 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<FinishResult | null>(null);
+  const [studying, setStudying] = useState(showStudy && lesson.study !== null);
+  const [studied, setStudied] = useState(false);
   const attempt = useRef<Promise<string> | null>(null);
   const continueButton = useRef<HTMLButtonElement>(null);
 
@@ -89,7 +94,7 @@ function Run({ lesson, onRestart }: { lesson: LessonData; onRestart: () => void 
   const hasAnswer = answer !== null && answer !== undefined;
   const onEnter = useEffectEvent((target: EventTarget | null) => {
     const inFooter = target instanceof Element && target.closest("footer, a") !== null;
-    if (inFooter) return false;
+    if (inFooter || studying) return false;
     if (target instanceof HTMLButtonElement && !result && !hasAnswer) return false; // Enter seleciona
     if (result) next();
     else void check();
@@ -121,6 +126,18 @@ function Run({ lesson, onRestart }: { lesson: LessonData; onRestart: () => void 
 
   return (
     <div className="flex min-h-dvh flex-col">
+      {studying && lesson.study && (
+        <StudyScreen
+          lesson={lesson}
+          study={lesson.study}
+          action={studied ? "Voltar à lição" : "Começar os exercícios"}
+          exitHref={studied ? undefined : "/trilha"}
+          onClose={() => {
+            setStudying(false);
+            setStudied(true);
+          }}
+        />
+      )}
       <header className="mx-auto flex w-full max-w-3xl items-center gap-4 px-5 py-5">
         <Link
           href="/trilha"
@@ -132,6 +149,15 @@ function Run({ lesson, onRestart }: { lesson: LessonData; onRestart: () => void 
         </Link>
         <Progress value={progressOf(flow)} label="Progresso da lição" className="flex-1" />
         <span className="hidden text-sm font-bold text-muted sm:block">{lesson.title}</span>
+        {lesson.study && (
+          <button
+            type="button"
+            onClick={() => setStudying(true)}
+            className="shrink-0 rounded-pill px-3 py-2 text-sm font-bold text-muted transition-colors hover:bg-surface-soft hover:text-foreground"
+          >
+            <span aria-hidden>📖</span> Explicação
+          </button>
+        )}
       </header>
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-5 pt-6 pb-64">
