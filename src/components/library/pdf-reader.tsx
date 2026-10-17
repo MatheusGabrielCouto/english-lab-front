@@ -3,13 +3,16 @@
 import "pdfjs-dist/web/pdf_viewer.css";
 import type { PDFDocumentProxy, RenderTask, TextLayer } from "pdfjs-dist";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api-client";
 import type { Book } from "@/lib/book-types";
 import { cn } from "@/lib/cn";
+import { globalOffset, highlight, readPageText, wordAtPoint } from "@/lib/page-text";
 import { loadPdfJs, PDF_ASSETS } from "@/lib/pdf";
+import { normalizeSelection, sentenceAround } from "@/lib/reading-context";
 import { useLocalSetting } from "@/lib/use-local-setting";
+import { WordPopup, type LookupTarget } from "@/components/library/word-popup";
 
 const THEMES = ["light", "sepia", "dark"] as const;
 type Theme = (typeof THEMES)[number];
@@ -42,6 +45,9 @@ export function PdfReader({ book }: { book: Book }) {
   const [theme, setTheme] = useLocalSetting<Theme>("reader-theme", "light", THEMES);
   const [zoomKey, setZoomKey] = useLocalSetting("reader-zoom", "1", ZOOMS);
   const [width, setWidth] = useState(0);
+  const [target, setTarget] = useState<LookupTarget | null>(null);
+  const [hint, setHint] = useLocalSetting("reader-hint", "show", ["show", "hidden"] as const);
+  const targetCounter = useRef(0);
 
   const stage = useRef<HTMLDivElement>(null);
   const canvasHolder = useRef<HTMLDivElement>(null);
@@ -207,21 +213,100 @@ export function PdfReader({ book }: { book: Book }) {
     };
   }, [save]);
 
+  /* ---------- tocar numa palavra: definição, tradução e cartão ---------- */
+  const closePopup = useCallback(() => {
+    highlight(null);
+    setTarget(null);
+  }, []);
+
+  const open = useCallback((next: Omit<LookupTarget, "id" | "viewport" | "page">) => {
+    targetCounter.current += 1;
+    setTarget({
+      ...next,
+      id: targetCounter.current,
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      page: latest.current.page,
+    });
+  }, []);
+
+  function onPageUp(event: PointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    const layer = textHolder.current?.firstElementChild;
+    if (!layer) return;
+    const { clientX, clientY } = event;
+
+    // o navegador só atualiza a seleção depois do pointerup
+    window.setTimeout(() => {
+      const selection = window.getSelection();
+
+      // arrastou: expressão selecionada
+      if (selection && !selection.isCollapsed && selection.rangeCount > 0 && layer.contains(selection.anchorNode)) {
+        const text = normalizeSelection(selection.toString());
+        if (!text) return closePopup();
+        const range = selection.getRangeAt(0);
+        const page = readPageText(layer);
+        const from = globalOffset(page, range.startContainer, range.startOffset);
+        const to = globalOffset(page, range.endContainer, range.endOffset);
+        const box = range.getBoundingClientRect();
+        highlight(null);
+        open({
+          text,
+          kind: /\s/.test(text) ? "phrase" : "word",
+          sentence: from !== null && to !== null ? sentenceAround(page.text, from, to) : undefined,
+          rect: { top: box.top, bottom: box.bottom, left: box.left, width: box.width },
+        });
+        return;
+      }
+
+      // só tocou: palavra sob o dedo
+      const hit = wordAtPoint(layer, clientX, clientY);
+      if (!hit) return closePopup();
+      const sentence = sentenceAround(hit.page.text, hit.start, hit.end);
+      const box = hit.range.getBoundingClientRect();
+      // "The" no começo da frase vira "the"; nomes próprios no meio da frase mantêm a inicial
+      const text = sentence.wordIndex === 0 && /^\p{Lu}\p{Ll}+$/u.test(hit.word) ? hit.word.toLowerCase() : hit.word;
+      highlight(hit.range);
+      if (hint === "show") setHint("hidden");
+      open({
+        text,
+        kind: "word",
+        sentence,
+        rect: { top: box.top, bottom: box.bottom, left: box.left, width: box.width },
+      });
+    }, 0);
+  }
+
+  // fecha ao rolar, redimensionar ou sair da página
+  useEffect(() => {
+    if (!target) return;
+    const stageElement = stage.current;
+    stageElement?.addEventListener("scroll", closePopup, { passive: true });
+    window.addEventListener("resize", closePopup);
+    return () => {
+      stageElement?.removeEventListener("scroll", closePopup);
+      window.removeEventListener("resize", closePopup);
+    };
+  }, [target, closePopup]);
+
+  useEffect(() => () => highlight(null), []);
+
   /* ---------- navegação ---------- */
   const go = useCallback(
     (target: number) => {
       if (!numPages) return;
       const next = Math.min(numPages, Math.max(1, Math.round(target)));
+      closePopup();
       setPage(next);
       setPageInput(String(next));
     },
-    [numPages],
+    [numPages, closePopup],
   );
 
   useEffect(() => {
     function onKeyDown(event: globalThis.KeyboardEvent) {
       if ((event.target as HTMLElement).closest("input, textarea, select")) return;
       if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key === "Escape") return closePopup();
       if (event.key === "ArrowRight" || event.key === "PageDown") go(latest.current.page + 1);
       else if (event.key === "ArrowLeft" || event.key === "PageUp") go(latest.current.page - 1);
       else if (event.key === "Home") go(1);
@@ -231,7 +316,7 @@ export function PdfReader({ book }: { book: Book }) {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [go]);
+  }, [go, closePopup]);
 
   function onPageInputKey(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Enter") {
@@ -243,6 +328,7 @@ export function PdfReader({ book }: { book: Book }) {
   function stepZoom(direction: 1 | -1) {
     const index = ZOOMS.indexOf(zoomKey as (typeof ZOOMS)[number]);
     const next = ZOOMS[Math.min(ZOOMS.length - 1, Math.max(0, index + direction))];
+    closePopup();
     setZoomKey(next);
   }
 
@@ -317,7 +403,14 @@ export function PdfReader({ book }: { book: Book }) {
         </div>
       </header>
 
-      <div ref={stage} className={cn("relative flex-1 overflow-auto px-4 py-6 transition-colors duration-200", styles.stage)}>
+      <div
+        ref={stage}
+        onPointerDown={(event) => {
+          // clique fora da página (nas margens) fecha o popup
+          if (!pageBox.current?.contains(event.target as Node)) closePopup();
+        }}
+        className={cn("relative flex-1 overflow-auto px-4 py-6 transition-colors duration-200", styles.stage)}
+      >
         {state.kind === "error" ? (
           <div className="mx-auto mt-16 max-w-sm rounded-card border-2 border-border bg-surface p-6 text-center">
             <p className="font-display text-xl font-semibold">Ops!</p>
@@ -333,8 +426,19 @@ export function PdfReader({ book }: { book: Book }) {
                 {state.kind === "loading" ? "Carregando o livro…" : "Desenhando a página…"}
               </p>
             )}
+            {hint === "show" && drawn && (
+              <p className="mx-auto mb-4 flex max-w-md items-center justify-between gap-3 rounded-pill border-2 border-border bg-surface px-4 py-2 text-sm shadow-[0_3px_0_0_var(--color-border)]">
+                <span>
+                  <strong>Dica:</strong> toque numa palavra para ver o significado e salvar no Anki. Arraste para expressões.
+                </span>
+                <button type="button" onClick={() => setHint("hidden")} aria-label="Fechar dica" className="shrink-0 font-bold text-muted hover:text-foreground">
+                  ×
+                </button>
+              </p>
+            )}
             <div
               ref={pageBox}
+              onPointerUp={onPageUp}
               className={cn("relative mx-auto bg-white shadow-xl transition-opacity duration-150", rendering && "opacity-70")}
               style={{ width: 0, height: 0 }}
             >
@@ -344,6 +448,8 @@ export function PdfReader({ book }: { book: Book }) {
           </>
         )}
       </div>
+
+      {target && <WordPopup key={target.id} target={target} book={book} onClose={closePopup} />}
 
       <footer className="border-t-2 border-border bg-background/95 px-4 py-3">
         <div className="mx-auto flex max-w-3xl items-center gap-4">

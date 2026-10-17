@@ -148,3 +148,9 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* palavra tocada no leitor (Custom Highlight API) */
+::highlight(lookup) {
+  background-color: color-mix(in srgb, var(--butter) 75%, transparent);
+  color: inherit;
+}
