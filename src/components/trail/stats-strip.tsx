@@ -5,7 +5,16 @@ const weekday = new Intl.DateTimeFormat("pt-BR", { weekday: "narrow", timeZone: 
 const weekdayLong = new Intl.DateTimeFormat("pt-BR", { weekday: "long", timeZone: "UTC" });
 
 /** Streak, XP e os últimos 7 dias, num bloco só. Sem estado: serve em servidor e cliente. */
-export function StatsStrip({ stats, className }: { stats: TrailStats; className?: string }) {
+export function StatsStrip({
+  stats,
+  className,
+  layout = "row",
+}: {
+  stats: TrailStats;
+  className?: string;
+  /** "stack" empilha streak, XP e a semana (para caber ao lado de outro cartão) */
+  layout?: "row" | "stack";
+}) {
   const { streak } = stats;
   const days = streak.current === 1 ? "dia" : "dias";
 
@@ -13,7 +22,8 @@ export function StatsStrip({ stats, className }: { stats: TrailStats; className?
     <section
       aria-label="Seu progresso"
       className={cn(
-        "flex flex-wrap items-center gap-x-8 gap-y-4 rounded-card border-2 border-border bg-surface px-6 py-5 shadow-[0_4px_0_0_var(--color-border)]",
+        "flex flex-wrap rounded-card border-2 border-border bg-surface px-6 py-5 shadow-[0_4px_0_0_var(--color-border)]",
+        layout === "row" ? "items-center gap-x-8 gap-y-4" : "flex-col gap-5",
         className,
       )}
     >
@@ -54,7 +64,7 @@ export function StatsStrip({ stats, className }: { stats: TrailStats; className?
         </div>
       </div>
 
-      <ol aria-label="Últimos 7 dias" className="ml-auto flex items-center gap-2">
+      <ol aria-label="Últimos 7 dias" className={cn("flex items-center gap-2", layout === "row" && "ml-auto")}>
         {stats.week.map((day, index) => {
           const label = weekdayLong.format(new Date(`${day.day}T12:00:00Z`));
           const isToday = index === stats.week.length - 1;

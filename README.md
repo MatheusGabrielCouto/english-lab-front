@@ -58,8 +58,9 @@ Rotas em `/anki`: baralhos, `/anki/cartoes` (buscar, editar, mover, suspender e 
 
 ## Trilha de aulas
 
-- `/trilha`: níveis A1–C2 → unidades → lições num caminho ondulado, com estrelas, "Continuar" e a faixa de **streak / XP / últimos 7 dias** (a mesma faixa aparece no painel). Níveis sem conteúdo aparecem como "em breve".
+- `/trilha`: um nível por vez. No topo, o cartão **Continuar** (a próxima lição, com unidade e posição) ao lado da faixa de **streak / XP / últimos 7 dias**; abaixo, abas **A1…C2** (links `?nivel=a2`, fixas ao rolar, com andamento de cada nível) e, no nível escolhido, as unidades com **cartões de lição** (estrelas, XP, "Próxima"). Níveis sem lições mostram "em breve". A lógica (resumo por nível, nível padrão, status da unidade) está em `src/lib/trail-view.ts`, com testes.
 - `/aprender/[nível]/[unidade]/[lição]`: tela cheia, um exercício por vez, com atalhos (`1`–`6` escolhem, `Enter` verifica e continua). O que você erra **volta no fim** da fila até acertar (a nota só considera a primeira resposta, corrigida no servidor).
+- Perguntas de **leitura** (`Leia: “texto” pergunta`) aparecem com o texto num cartão próprio, com botão de ouvir.
 - Cinco tipos de exercício: múltipla escolha (com áudio), lacuna (tocar ou digitar), montar a frase, tradução e ditado (usa a voz do navegador, normal e devagar).
 - Ao concluir: estrelas, XP, streak e as **palavras da lição**, com um botão que cria os cartões no Anki (`Trilha › A1 › Unidade`).
 - O fluxo da fila (`src/lib/lesson-flow.ts`) e a montagem dos cartões de vocabulário (`src/lib/lesson-vocab.ts`) são funções puras com testes (`pnpm test`).

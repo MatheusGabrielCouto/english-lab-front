@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
+import { splitReading } from "@/lib/reading-prompt";
 import { seededShuffle } from "@/lib/shuffle";
 import { speak, useEnglishVoices, useSpeechSettings } from "@/lib/speech";
 import type { CheckResult, PublicExercise } from "@/lib/trail-types";
@@ -131,9 +132,26 @@ export function MultipleChoice({ exercise, round, locked, result, onAnswer }: Vi
     return () => window.removeEventListener("keydown", onKey);
   }, [locked, order, onAnswer]);
 
+  const reading = splitReading(exercise.prompt);
+
   return (
     <div className="flex flex-col gap-6">
-      <Title>{exercise.prompt}</Title>
+      {reading ? (
+        <>
+          <figure className="rounded-2xl border-2 border-border bg-surface-soft p-5">
+            <figcaption className="mb-2 flex items-center justify-between gap-3 text-sm font-bold text-muted">
+              <span>📖 Leia o texto</span>
+              <SpeakButtonCompact text={reading.passage} />
+            </figcaption>
+            <blockquote lang="en" className="text-lg leading-relaxed text-pretty md:text-xl">
+              {reading.passage}
+            </blockquote>
+          </figure>
+          <Title>{reading.question}</Title>
+        </>
+      ) : (
+        <Title>{exercise.prompt}</Title>
+      )}
       {exercise.speak && <SpeakButton text={exercise.speak} autoPlay />}
       <ul className="flex flex-col gap-3">
         {order.map((index, position) => {
