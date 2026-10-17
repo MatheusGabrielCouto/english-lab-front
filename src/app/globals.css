@@ -189,3 +189,30 @@ body {
     transform: none;
   }
 }
+
+/* barra de rolagem discreta para painéis internos (popup de palavra): fina, sem trilha, dentro do cartão */
+.scroll-soft {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted) 55%, transparent) transparent;
+  scrollbar-gutter: stable;
+}
+
+.scroll-soft::-webkit-scrollbar {
+  width: 10px;
+}
+
+.scroll-soft::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-soft::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--muted) 55%, transparent);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+
+.scroll-soft::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--muted) 85%, transparent);
+  background-clip: content-box;
+}

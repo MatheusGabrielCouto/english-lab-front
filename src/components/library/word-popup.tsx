@@ -231,7 +231,7 @@ export function WordPopup({
       </header>
 
       {/* corpo: rola quando o conteúdo é grande; o rodapé não sai do lugar */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3">
+      <div className="scroll-soft min-h-0 flex-1 overflow-y-auto pr-1.5 pl-4 pb-3">
         {state.status === "loading" && (
           <div role="status" aria-label="Buscando" className="mt-2 flex flex-col gap-2">
             <div className="h-16 animate-pulse rounded-2xl bg-surface-soft" />
