@@ -24,6 +24,8 @@ Componentes base em `src/components/ui` (`Button`, `Card`, `Progress`) e o masco
 ## Autenticação
 
 - `src/proxy.ts` protege `/painel` e redireciona logados para fora de `/entrar` e `/cadastrar`.
+- **Painel (`/painel`):** saudação por horário e uma frase sobre o dia (XP/streak); cartão da trilha (próxima lição e barra do nível), sequência da semana, cartão do Anki (cartões para hoje, só baralhos raiz, com "Estudar agora" no baralho com mais pendências), cartão de leitura (livro em andamento) e atalhos. Anki e livros carregam em `Suspense` próprios, então a página abre sem esperar por eles. A lógica fica em `src/lib/dashboard.ts` (com testes).
+- **Celular:** todas as telas foram revisadas em 375 px; o menu principal marca a seção atual e rola na horizontal, e a barra do leitor cabe em duas linhas (o tema vira um botão que alterna).
 - O refresh token só trafega em `/api/auth/*` (`Path=/api/auth`). Quando o access token expira, o proxy
   manda a navegação por `src/app/api/auth/session/route.ts`, que renova a sessão e volta para a página.
 - Server Components leem o usuário com `getCurrentUser()` (`src/lib/session.ts`), sempre dentro de `<Suspense>`.
