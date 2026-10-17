@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Estudar" };
 
 export default function StudyPage({ params }: PageProps<"/anki/estudar/[deckId]">) {
   return (
-    <Suspense fallback={<p className="text-muted">Preparando seus cartões…</p>}>
+    <Suspense fallback={<p className="grid min-h-dvh place-items-center font-semibold text-muted">Preparando seus cartões…</p>}>
       <Study params={params} />
     </Suspense>
   );

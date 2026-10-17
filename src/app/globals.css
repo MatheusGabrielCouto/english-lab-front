@@ -177,3 +177,15 @@ body {
     transform: none;
   }
 }
+
+/* a resposta do cartão aparece suavemente (respeita prefers-reduced-motion via motion-safe) */
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

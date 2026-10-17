@@ -39,6 +39,12 @@ Rotas em `/anki`: baralhos, `/anki/cartoes` (buscar, editar, mover, suspender e 
   magenta ficam abaixo de 3:1 de contraste, então a legenda sempre mostra os números (regra de alívio).
 - Downloads de exportação são links `<a download>` para `/api/anki/export/*`: o navegador baixa com o cookie de sessão.
 
+### Estudo (`/anki/estudar/[baralho]`)
+
+- **Modo foco:** sem o cabeçalho do site (layout próprio dentro do grupo de rotas `anki/(painel)`), com barra de **progresso da sessão**, contadores Novos/Aprender/Revisar e o tipo do cartão atual.
+- Toque no cartão (ou `Espaço`/`Enter`) para ver a resposta; ações **fixas embaixo**, na altura do polegar: Errei · Difícil · Bom · Fácil com o intervalo e a tecla (1–4). Em cartões de lacuna, a frase completa substitui a que tinha o buraco.
+- No fim, resumo da sessão: cartões, % sem errar e tempo (`src/lib/study-stats.ts`, com testes).
+
 ## Biblioteca
 
 - `/biblioteca`: estante com filtro por nível, busca e "Continue lendo". `/biblioteca/[id]`: leitor com **pdf.js**
