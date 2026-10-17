@@ -3,13 +3,16 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AppHeader } from "@/components/app-header";
 import { ButtonLink } from "@/components/ui/button";
+import { StatsStrip } from "@/components/trail/stats-strip";
 import { Card } from "@/components/ui/card";
+import { serverApi } from "@/lib/api-server";
 import { getCurrentUser } from "@/lib/session";
+import type { TrailStats } from "@/lib/trail-types";
 
 export const metadata: Metadata = { title: "Painel" };
 
 const areas = [
-  { title: "Trilha de aulas", tone: "primary", text: "Do A1 ao C2, lição por lição.", href: null },
+  { title: "Trilha de aulas", tone: "primary", text: "Do A1 ao C2, lição por lição.", href: "/trilha" },
   { title: "Anki", tone: "sky", text: "Flashcards com repetição espaçada.", href: "/anki" },
   { title: "Biblioteca", tone: "butter", text: "Livros em inglês para ler e salvar palavras.", href: "/biblioteca" },
 ] as const;
@@ -33,6 +36,7 @@ async function Welcome() {
   if (!user) redirect("/api/auth/session?next=%2Fpainel&reset=1");
 
   const firstName = user.name.split(" ")[0];
+  const { stats } = await serverApi<{ stats: TrailStats }>("/api/trail/stats", "/painel");
 
   return (
     <main className="mt-12">
@@ -46,7 +50,9 @@ async function Welcome() {
         Por onde vamos começar hoje?
       </p>
 
-      <ul className="mt-10 grid gap-5 md:grid-cols-3">
+      <StatsStrip stats={stats} className="mt-8" />
+
+      <ul className="mt-8 grid gap-5 md:grid-cols-3">
         {areas.map((item) => (
           <li key={item.title}>
             <Card tone={item.tone} className="h-full">

@@ -55,3 +55,11 @@ Rotas em `/anki`: baralhos, `/anki/cartoes` (buscar, editar, mover, suspender e 
 - **Adicionar ao Anki:** cartão de *Palavra* (frente = palavra, verso = tradução) ou de *Lacuna na frase* (`{{c1::palavra}}`); a frase e `📖 Livro · p. N` vão no campo extra.
   O baralho padrão é `Livros › Título do livro`, criado sozinho; a escolha de tipo e baralho fica lembrada. Avisa se você já tem um cartão da palavra.
 - Achar a palavra e a frase (`src/lib/reading-context.ts`) e montar o cartão (`src/lib/word-cards.ts`) são funções puras com testes: `pnpm test`.
+
+## Trilha de aulas
+
+- `/trilha`: níveis A1–C2 → unidades → lições num caminho ondulado, com estrelas, "Continuar" e a faixa de **streak / XP / últimos 7 dias** (a mesma faixa aparece no painel). Níveis sem conteúdo aparecem como "em breve".
+- `/aprender/[nível]/[unidade]/[lição]`: tela cheia, um exercício por vez, com atalhos (`1`–`6` escolhem, `Enter` verifica e continua). O que você erra **volta no fim** da fila até acertar (a nota só considera a primeira resposta, corrigida no servidor).
+- Cinco tipos de exercício: múltipla escolha (com áudio), lacuna (tocar ou digitar), montar a frase, tradução e ditado (usa a voz do navegador, normal e devagar).
+- Ao concluir: estrelas, XP, streak e as **palavras da lição**, com um botão que cria os cartões no Anki (`Trilha › A1 › Unidade`).
+- O fluxo da fila (`src/lib/lesson-flow.ts`) e a montagem dos cartões de vocabulário (`src/lib/lesson-vocab.ts`) são funções puras com testes (`pnpm test`).
