@@ -8,12 +8,20 @@ import { vocabDeckPath, vocabNotes } from "@/lib/lesson-vocab";
 import type { LessonData } from "@/lib/trail-types";
 import { useLocalSetting } from "@/lib/use-local-setting";
 
+/** O que aconteceu na hora de adicionar, em português claro. */
+function outcomeText({ created, skipped }: { created: number; skipped: number }) {
+  if (created === 0) return "todas essas palavras já estavam nos seus cartões";
+  const novas = `${created} ${created === 1 ? "cartão novo" : "cartões novos"}`;
+  return skipped > 0 ? `${novas}; ${skipped} já ${skipped === 1 ? "existia" : "existiam"}` : novas;
+}
+
 /** As palavras da lição, com botão para virarem cartões do Anki (uma vez só por lição). */
 export function VocabToAnki({ lesson }: { lesson: LessonData }) {
   const [added, setAdded] = useLocalSetting(`lesson-vocab:${lesson.id}`, "no", ["yes", "no"] as const);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deckId, setDeckId] = useState<string | null>(null);
+  const [result, setResult] = useState<{ created: number; skipped: number } | null>(null);
 
   if (lesson.vocab.length === 0) return null;
 
@@ -25,9 +33,13 @@ export function VocabToAnki({ lesson }: { lesson: LessonData }) {
         method: "POST",
         body: { names: vocabDeckPath(lesson) },
       });
-      for (const note of vocabNotes(lesson)) {
-        await api("/anki/notes", { method: "POST", body: { ...note, deckId: deck.id } });
-      }
+      // uma chamada só: o servidor pula o que você já tem (em qualquer baralho), então apertar de novo,
+      // refazer a lição ou palavras que se repetem entre lições não geram cartões duplicados
+      const outcome = await api<{ created: number; skipped: number }>("/anki/notes/batch", {
+        method: "POST",
+        body: { deckId: deck.id, scope: "collection", notes: vocabNotes(lesson) },
+      });
+      setResult(outcome);
       setDeckId(deck.id);
       setAdded("yes");
     } catch (reason) {
@@ -55,6 +67,7 @@ export function VocabToAnki({ lesson }: { lesson: LessonData }) {
         {added === "yes" ? (
           <p className="font-semibold text-primary">
             ✓ No seu Anki
+            {result && <span className="font-normal text-muted"> · {outcomeText(result)}</span>}
             {deckId && (
               <>
                 {" · "}
