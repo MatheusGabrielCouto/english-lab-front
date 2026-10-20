@@ -7,9 +7,13 @@ import { cn } from "@/lib/cn";
 
 const links = [
   { href: "/painel", label: "Painel" },
+  { href: "/hoje", label: "Hoje" },
   { href: "/trilha", label: "Trilha" },
   { href: "/anki", label: "Anki" },
   { href: "/biblioteca", label: "Biblioteca" },
+  { href: "/diario", label: "Diário" },
+  { href: "/meta", label: "Meta" },
+  { href: "/entrevista", label: "Entrevista" },
 ];
 
 /** Menu principal, com a seção atual marcada. Rola na horizontal se faltar espaço. */

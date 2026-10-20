@@ -77,3 +77,31 @@ Rotas em `/anki`: baralhos, `/anki/cartoes` (buscar, editar, mover, suspender e 
 
 - `/nivelamento`: 30 perguntas de A1 a C1, uma por vez, **sem correção no meio** e com "Não sei" (conta como errada, mas evita chute). No fim mostra o nível em que começar e os acertos por nível; dá para refazer.
 - Na trilha: convite ao teste para quem ainda não fez, selo "Seu nível" (com aviso se ainda não há lições ali) e "Você começa aqui" no título do nível. O botão "Continuar" respeita o nível.
+
+## Meta de estudo (`/meta`)
+
+- O aluno escolhe o **nível** que quer alcançar (B2 vem como recomendado para trabalhar no exterior), o **prazo** (atalhos de 6 meses a 2 anos ou uma data) e, se quiser, o **objetivo em palavras**. A tela mostra a conta ao vivo: horas de estudo necessárias e minutos por dia e por semana.
+- Com a meta criada: barra de progresso com o **marcador do prazo** (quanto do tempo já passou), dias que faltam, horas que faltam, meta de hoje, status (adiantado, no ritmo, dá para recuperar, prazo vencido, concluída), gráfico dos **últimos 14 dias**, de onde vem o estudo (lições, Anki, leitura, entrevistas, diário, treinos marcados no checklist, fora da plataforma) e um formulário para **registrar estudo feito fora** da plataforma.
+- O painel (`/painel`) mostra a meta em um card, ou o convite para criar uma.
+- As contas de formatação ficam em `src/lib/goal-format.ts` (com testes); a conta do plano é do servidor.
+
+## Preparação para entrevista (`/entrevista`)
+
+- **46 perguntas** de entrevista de dev em 10 categorias (JavaScript, TypeScript, React, backend, bancos de dados, APIs, Git e DevOps, testes, arquitetura e comportamental), com filtro por categoria e dificuldade e o progresso de cada uma.
+- Na pergunta: o aluno escreve a resposta **em inglês** (contador de palavras, frases úteis para começar) e recebe o feedback: nota técnica de 1 a 5, nível do inglês, **erros marcados no próprio texto** com a correção e a explicação em português, pontos fortes, imprecisões, o que uma boa resposta cobre e uma **versão melhorada** (com áudio). A resposta de exemplo fica escondida até o aluno pedir.
+- Sem a chave da IA no servidor, o feedback vira uma **revisão simples** por palavras-chave (e a tela avisa). Cada tentativa fica guardada no histórico da pergunta.
+
+## Hoje: checklist diário (`/hoje`)
+
+- O checklist do dia, com anel de progresso, a sequência de **dias completos** e a conta "X de Y feitos". Itens padrão: lição da trilha, Anki, leitura, diário e entrevista (**marcados sozinhos** quando o aluno faz a atividade na plataforma, com o progresso: "3 de 5 min lidos") e listening e falar em voz alta (**manuais**, com a pergunta opcional "quantos minutos?", que entra na meta de estudo).
+- Qualquer item pode ser marcado à mão (por exemplo, o Anki feito no celular). O aluno **personaliza** o checklist: liga e desliga itens, cria até 10 próprios, renomeia, apaga e reordena.
+- Calendário do mês colorido pelo quanto foi feito em cada dia e atalho para a meta. O painel (`/painel`) ganhou o card "Checklist de hoje" ao lado da meta, e o menu, os links **Hoje** e **Diário**.
+- Os formatadores (mês, detalhe de cada item, mensagem do dia) ficam em `src/lib/checklist-format.ts`, com testes.
+
+## Diário em inglês (`/diario`)
+
+- **Editor do dia:** textarea em inglês com contador de palavras (ideal de 50 a 150), humor em emoji e **tema do dia** sugerido (rotativo, pela faixa de nível do aluno) com áudio. Uma entrada por dia; dá para escrever hoje e preencher os **7 dias anteriores** (`/diario/AAAA-MM-DD`).
+- **Rascunho no navegador:** o que o aluno digita é guardado no `localStorage` e volta se a aba fechar antes de salvar. O tempo escrevendo (sem contar pausas longas) vai para a meta.
+- **Corrigir meu texto:** sob demanda, salva e pede a correção: nível estimado, **erros marcados no próprio texto** com a explicação em português, pontos fortes, versão mais natural (com áudio) e uma dica. Sem a IA no servidor, vale uma **revisão simples** (e a tela avisa). Se o texto mudar depois, a correção aparece como desatualizada.
+- **Histórico** (`/diario/historico`): calendário do mês com os dias escritos, lista das entradas, **busca** por texto, estatísticas (sequência, entradas, palavras, média) e **exportação** de tudo em `.md`. O diário é privado.
+- Os formatadores e o calendário ficam em `src/lib/diary-format.ts`, com testes.

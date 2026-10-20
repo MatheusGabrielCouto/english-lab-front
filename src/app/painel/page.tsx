@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AppHeader } from "@/components/app-header";
-import { AnkiCard, CardSkeleton, PlacementInvite, ReadingCard, Shortcuts, TrailCard } from "@/components/painel/cards";
+import { AnkiCard, CardSkeleton, GoalCard, PlacementInvite, ReadingCard, Shortcuts, TodayCard, TrailCard } from "@/components/painel/cards";
 import { StatsStrip } from "@/components/trail/stats-strip";
 import type { Deck } from "@/lib/anki-types";
+import type { ChecklistToday } from "@/lib/checklist-types";
+import type { GoalOverview } from "@/lib/goal-types";
 import { serverApi } from "@/lib/api-server";
 import type { Book } from "@/lib/book-types";
 import { ankiToday, continueReading, dayMessage, greetingFor, levelProgress } from "@/lib/dashboard";
@@ -48,7 +50,16 @@ async function Dashboard() {
 
       {!overview.placement && !started && <div className="mt-6"><PlacementInvite /></div>}
 
-      <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="mt-8 grid gap-5 lg:grid-cols-2">
+        <Suspense fallback={<CardSkeleton label="Carregando o checklist de hoje" />}>
+          <Today />
+        </Suspense>
+        <Suspense fallback={<CardSkeleton label="Carregando sua meta" />}>
+          <Goal />
+        </Suspense>
+      </div>
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <TrailCard next={findNext(overview)} started={started} progress={levelProgress(overview)} />
         <StatsStrip stats={stats} layout="stack" />
       </div>
@@ -75,4 +86,14 @@ async function Anki() {
 async function Reading({ isAdmin }: { isAdmin: boolean }) {
   const { books } = await serverApi<{ books: Book[] }>("/api/books", "/painel");
   return <ReadingCard book={continueReading(books)} isAdmin={isAdmin} />;
+}
+
+async function Goal() {
+  const overview = await serverApi<GoalOverview>("/api/goal", "/painel");
+  return <GoalCard overview={overview} />;
+}
+
+async function Today() {
+  const data = await serverApi<ChecklistToday>("/api/checklist/today", "/painel");
+  return <TodayCard data={data} />;
 }

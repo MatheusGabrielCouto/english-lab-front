@@ -12,7 +12,7 @@ export class ApiError extends Error {
   }
 }
 
-type Options = { method?: "GET" | "POST" | "PATCH" | "DELETE"; body?: unknown };
+type Options = { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; body?: unknown };
 
 let refreshing: Promise<void> | null = null;
 
