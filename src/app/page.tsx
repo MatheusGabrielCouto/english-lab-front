@@ -16,6 +16,16 @@ const levels = [
 
 const features = [
   {
+    title: "Trilha de aulas",
+    tone: "primary",
+    text: "Do alfabeto ao C2, com exercícios curtos, explicação antes da prática, XP e sequência diária.",
+  },
+  {
+    title: "Teste de nível",
+    tone: "lavender",
+    text: "30 perguntas, uma por vez, e a trilha abre no ponto certo para você. Dá para refazer quando quiser.",
+  },
+  {
     title: "Anki integrado",
     tone: "sky",
     text: "Flashcards com repetição espaçada (FSRS), cartões cloze e importação dos seus baralhos .apkg.",
@@ -26,9 +36,24 @@ const features = [
     text: "Leia PDFs em inglês dentro do site. Toque numa palavra e ela vira flashcard com a frase do livro.",
   },
   {
-    title: "Trilha de aulas",
+    title: "Checklist diário",
     tone: "primary",
-    text: "Do alfabeto ao C2, com exercícios curtos, XP e sequência diária para manter o ritmo.",
+    text: "O que fazer hoje: lição, Anki, leitura, diário e entrevista se marcam sozinhos. Crie os seus itens e acompanhe o mês.",
+  },
+  {
+    title: "Diário em inglês",
+    tone: "coral",
+    text: "Escreva um pouco todo dia, com um tema sugerido. Peça a correção: os erros ficam marcados no seu texto, com explicação em português.",
+  },
+  {
+    title: "Meta de estudo",
+    tone: "lavender",
+    text: "Quer trabalhar no exterior? Escolha o nível e a data e veja quantos minutos estudar por dia, com a barra de progresso até lá.",
+  },
+  {
+    title: "Entrevista técnica",
+    tone: "sky",
+    text: "46 perguntas de entrevista para devs. Responda em inglês e receba feedback do seu inglês e do conteúdo técnico.",
   },
 ] as const;
 
@@ -62,8 +87,9 @@ export default function Home() {
               Aprenda inglês de um jeito leve e que dá resultado.
             </h1>
             <p className="mt-5 max-w-xl text-lg text-muted text-pretty">
-              Aulas curtas, flashcards que você não esquece e livros para ler de
-              verdade. Tudo conectado: o que você lê vira o que você revisa.
+              Aulas curtas, flashcards que você não esquece, livros para ler de
+              verdade e um diário para escrever todo dia. Tudo conectado, com
+              checklist, meta e preparação para entrevistas no exterior.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <ButtonLink href="/cadastrar" size="lg">Começar agora</ButtonLink>
@@ -107,7 +133,7 @@ export default function Home() {
 
         <section id="recursos" className="mx-auto w-full max-w-6xl scroll-mt-6 px-5 py-14">
           <h2 className="font-display text-3xl font-semibold md:text-4xl">Tudo o que você precisa num lugar só</h2>
-          <ul className="mt-8 grid gap-5 md:grid-cols-3">
+          <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {features.map((feature) => (
               <li key={feature.title}>
                 <Card tone={feature.tone} className="h-full">
