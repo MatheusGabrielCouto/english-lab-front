@@ -45,6 +45,9 @@ async function Content() {
       <p className="mt-6 text-muted">
         Quer ver o quanto falta para a sua meta? <Link href="/meta" className="font-bold text-foreground underline underline-offset-4">Abrir minha meta</Link>
       </p>
+      <p className="mt-2 text-muted">
+        Bateu o desânimo? <Link href="/motivacao" className="font-bold text-foreground underline underline-offset-4">Abrir meu mural de motivação</Link>
+      </p>
     </>
   );
 }

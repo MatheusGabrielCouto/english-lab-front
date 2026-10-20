@@ -7,7 +7,8 @@ import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Progress } from "@/components/ui/progress";
 import { api, ApiError } from "@/lib/api-client";
-import { LEVELS, LEVEL_NAME, type Book, type CreatedBook, type Level, type PresignedUpload } from "@/lib/book-types";
+import { postToBucket } from "@/lib/bucket-upload";
+import { LEVELS, LEVEL_NAME, type Book, type CreatedBook, type Level } from "@/lib/book-types";
 import { cn } from "@/lib/cn";
 import { readPdfInfo } from "@/lib/pdf";
 
@@ -19,28 +20,6 @@ const SELECT =
 function megabytes(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1).replace(".", ",")} MB`;
-}
-
-/** Envia o arquivo direto ao bucket (POST pré-assinado), com progresso. O arquivo vai por último. */
-function postToBucket(target: PresignedUpload, blob: Blob, type: string, filename: string, onProgress?: (percent: number) => void) {
-  return new Promise<void>((resolve, reject) => {
-    const form = new FormData();
-    for (const [key, value] of Object.entries(target.fields)) form.append(key, value);
-    form.append("file", new Blob([blob], { type }), filename);
-
-    const request = new XMLHttpRequest();
-    request.open("POST", target.url);
-    request.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress?.(Math.round((event.loaded / event.total) * 100));
-    };
-    request.onload = () =>
-      request.status >= 200 && request.status < 300
-        ? resolve()
-        : reject(new Error(`O armazenamento recusou o arquivo (${request.status}).`));
-    request.onerror = () =>
-      reject(new Error("Não consegui enviar o arquivo. Confira a conexão e o CORS do bucket."));
-    request.send(form);
-  });
 }
 
 type Stage = "idle" | "reading" | "uploading" | "verifying";

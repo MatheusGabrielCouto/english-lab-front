@@ -12,6 +12,7 @@ const links = [
   { href: "/anki", label: "Anki" },
   { href: "/biblioteca", label: "Biblioteca" },
   { href: "/diario", label: "Diário" },
+  { href: "/motivacao", label: "Motivação" },
   { href: "/meta", label: "Meta" },
   { href: "/entrevista", label: "Entrevista" },
 ];

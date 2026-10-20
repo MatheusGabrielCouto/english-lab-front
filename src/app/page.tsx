@@ -46,6 +46,11 @@ const features = [
     text: "Escreva um pouco todo dia, com um tema sugerido. Peça a correção: os erros ficam marcados no seu texto, com explicação em português.",
   },
   {
+    title: "Mural de motivação",
+    tone: "butter",
+    text: "Guarde frases, imagens e vídeos do YouTube e grave a sua própria voz para ouvir nos dias em que bater o desânimo.",
+  },
+  {
     title: "Meta de estudo",
     tone: "lavender",
     text: "Quer trabalhar no exterior? Escolha o nível e a data e veja quantos minutos estudar por dia, com a barra de progresso até lá.",
@@ -133,7 +138,7 @@ export default function Home() {
 
         <section id="recursos" className="mx-auto w-full max-w-6xl scroll-mt-6 px-5 py-14">
           <h2 className="font-display text-3xl font-semibold md:text-4xl">Tudo o que você precisa num lugar só</h2>
-          <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((feature) => (
               <li key={feature.title}>
                 <Card tone={feature.tone} className="h-full">

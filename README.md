@@ -105,3 +105,12 @@ Rotas em `/anki`: baralhos, `/anki/cartoes` (buscar, editar, mover, suspender e 
 - **Corrigir meu texto:** sob demanda, salva e pede a correção: nível estimado, **erros marcados no próprio texto** com a explicação em português, pontos fortes, versão mais natural (com áudio) e uma dica. Sem a IA no servidor, vale uma **revisão simples** (e a tela avisa). Se o texto mudar depois, a correção aparece como desatualizada.
 - **Histórico** (`/diario/historico`): calendário do mês com os dias escritos, lista das entradas, **busca** por texto, estatísticas (sequência, entradas, palavras, média) e **exportação** de tudo em `.md`. O diário é privado.
 - Os formatadores e o calendário ficam em `src/lib/diary-format.ts`, com testes.
+
+## Motivação (`/motivacao`)
+
+- O **mural pessoal** do aluno (privado): frases, imagens, vídeos do YouTube pelo link e **áudios gravados pelo próprio aluno**, para ouvir nos dias difíceis.
+- **Me motive agora:** um item aleatório em destaque e o botão "Outro" (o mesmo sorteio aparece no card "Seu motivo para continuar" do painel).
+- **Adicionar** (abas): *Frase* (até 500 caracteres, autor opcional); *Imagem* (JPG, PNG, WebP ou GIF até 5 MB; as grandes são reduzidas no navegador para 1600 px); *Vídeo* (links `watch`, `youtu.be`, `shorts`, `embed`, com prévia; o player `youtube-nocookie.com` só carrega ao clicar); *Áudio* (**gravador** com microfone: pausar, parar, até 5 min, ouvir antes de salvar; ou envio de arquivo até 15 MB).
+- **Mural:** filtros (frases, imagens, vídeos, áudios, favoritos), imagem ampliada ao clicar, favoritar, editar e apagar (com confirmação).
+- O gravador usa `MediaRecorder` e escolhe o formato que o navegador suporta (`src/lib/motivation-format.ts`, `pickAudioMime`): WebM/Opus no Chrome e no Firefox, MP4 no Safari. O microfone exige HTTPS (ou `localhost`) e a permissão do navegador; sem isso a aba explica e oferece o envio de arquivo.
+- O envio de imagem e áudio vai direto ao bucket (`src/lib/motivation-upload.ts` e `src/lib/bucket-upload.ts`, o mesmo POST pré-assinado dos livros).

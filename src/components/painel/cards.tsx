@@ -12,6 +12,8 @@ import type { GoalOverview } from "@/lib/goal-types";
 import { itemDetail } from "@/lib/checklist-format";
 import type { ChecklistToday } from "@/lib/checklist-types";
 import { cn } from "@/lib/cn";
+import { ItemBody } from "@/components/motivation/item-body";
+import type { MotivationItem } from "@/lib/motivation-types";
 import type { Book } from "@/lib/book-types";
 import { levelName } from "@/lib/trail-types";
 import type { AnkiToday } from "@/lib/dashboard";
@@ -310,6 +312,27 @@ export function TodayCard({ data }: { data: ChecklistToday }) {
         </ol>
         <ButtonLink href="/hoje" variant="ghost">
           Abrir o checklist
+        </ButtonLink>
+      </div>
+    </Card>
+  );
+}
+
+/** Um item aleatório do mural de motivação (ou o convite para criar o primeiro). */
+export function MotivationCard({ item }: { item: MotivationItem | null }) {
+  return (
+    <Card tone="lavender" className="flex h-full flex-col gap-4 p-6">
+      <p className="text-sm font-bold text-muted">💪 Seu motivo para continuar</p>
+      {item ? (
+        <ItemBody item={item} />
+      ) : (
+        <p className="text-pretty">
+          Guarde frases, imagens, vídeos e áudios com a sua própria voz para ouvir nos dias difíceis. Comece com uma frase que te faça seguir em frente.
+        </p>
+      )}
+      <div className="mt-auto">
+        <ButtonLink href="/motivacao" variant="ghost">
+          {item ? "Abrir meu mural" : "Criar meu mural"}
         </ButtonLink>
       </div>
     </Card>

@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AppHeader } from "@/components/app-header";
-import { AnkiCard, CardSkeleton, GoalCard, PlacementInvite, ReadingCard, Shortcuts, TodayCard, TrailCard } from "@/components/painel/cards";
+import { AnkiCard, CardSkeleton, GoalCard, PlacementInvite, ReadingCard, MotivationCard, Shortcuts, TodayCard, TrailCard } from "@/components/painel/cards";
 import { StatsStrip } from "@/components/trail/stats-strip";
 import type { Deck } from "@/lib/anki-types";
 import type { ChecklistToday } from "@/lib/checklist-types";
+import type { MotivationItem } from "@/lib/motivation-types";
 import type { GoalOverview } from "@/lib/goal-types";
 import { serverApi } from "@/lib/api-server";
 import type { Book } from "@/lib/book-types";
@@ -59,6 +60,12 @@ async function Dashboard() {
         </Suspense>
       </div>
 
+      <div className="mt-5">
+        <Suspense fallback={<CardSkeleton label="Carregando sua motivação" />}>
+          <Motivation />
+        </Suspense>
+      </div>
+
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <TrailCard next={findNext(overview)} started={started} progress={levelProgress(overview)} />
         <StatsStrip stats={stats} layout="stack" />
@@ -96,4 +103,9 @@ async function Goal() {
 async function Today() {
   const data = await serverApi<ChecklistToday>("/api/checklist/today", "/painel");
   return <TodayCard data={data} />;
+}
+
+async function Motivation() {
+  const { item } = await serverApi<{ item: MotivationItem | null }>("/api/motivation/random", "/painel");
+  return <MotivationCard item={item} />;
 }
