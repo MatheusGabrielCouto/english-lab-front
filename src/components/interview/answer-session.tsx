@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { FeedbackView, ListenButton } from "@/components/interview/feedback-view";
-import { Button } from "@/components/ui/button";
+import { VoiceInput } from "@/components/interview/voice-input";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ApiError, api } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
@@ -16,8 +17,13 @@ function when(value: string) {
   return new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
+/** "1:05" a partir de segundos, para o cronômetro. */
+function clock(total: number) {
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
+
 /** A tela de responder: editor, feedback, resposta de exemplo e o histórico das tentativas. */
-export function AnswerSession({ detail }: { detail: QuestionDetail }) {
+export function AnswerSession({ detail, next }: { detail: QuestionDetail; next: { slug: string; question: string } | null }) {
   const { question, aiEnabled } = detail;
   const [answer, setAnswer] = useState("");
   const [attempts, setAttempts] = useState<Attempt[]>(detail.attempts);
@@ -27,6 +33,8 @@ export function AnswerSession({ detail }: { detail: QuestionDetail }) {
   const [sample, setSample] = useState<Sample | null>(null);
   const [sampleBusy, setSampleBusy] = useState(false);
   const startedAt = useRef<number | null>(null);
+  const [running, setRunning] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
   const editor = useRef<HTMLTextAreaElement>(null);
   const result = useRef<HTMLDivElement>(null);
 
@@ -38,8 +46,20 @@ export function AnswerSession({ detail }: { detail: QuestionDetail }) {
     if (current) result.current?.focus();
   }, [current]);
 
+  // cronômetro: começa na primeira tecla (ou na primeira fala) e para ao enviar
+  useEffect(() => {
+    if (!running || current) return;
+    const timer = setInterval(() => {
+      if (startedAt.current) setElapsed(Math.round((Date.now() - startedAt.current) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [running, current]);
+
   function onChange(value: string) {
-    startedAt.current ??= Date.now();
+    if (startedAt.current === null) {
+      startedAt.current = Date.now();
+      setRunning(true);
+    }
     setAnswer(value.slice(0, MAX_CHARS));
   }
 
@@ -78,6 +98,8 @@ export function AnswerSession({ detail }: { detail: QuestionDetail }) {
     if (text !== undefined) setAnswer(text);
     setCurrent(null);
     startedAt.current = Date.now();
+    setElapsed(0);
+    setRunning(true);
     requestAnimationFrame(() => editor.current?.focus());
   }
 
@@ -102,9 +124,21 @@ export function AnswerSession({ detail }: { detail: QuestionDetail }) {
               <Button onClick={() => retry()} variant="sky">
                 Tentar de novo
               </Button>
+              {next && <ButtonLink href={`/entrevista/${next.slug}`}>Próxima pergunta</ButtonLink>}
             </div>
           </div>
           <FeedbackView feedback={current.feedback} answer={current.answer} onUseImproved={(text) => retry(text)} />
+          {next && (
+            <Card tone="sky" className="flex flex-wrap items-center justify-between gap-4 p-5">
+              <p className="min-w-0 text-pretty">
+                <span className="block text-sm font-bold text-muted">Próxima sugestão</span>
+                <span lang="en" className="font-display text-lg font-semibold">
+                  {next.question}
+                </span>
+              </p>
+              <ButtonLink href={`/entrevista/${next.slug}`}>Responder</ButtonLink>
+            </Card>
+          )}
         </div>
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-4">
@@ -127,8 +161,18 @@ export function AnswerSession({ detail }: { detail: QuestionDetail }) {
             <span className={cn(words >= 60 && words <= 180 && "font-bold text-primary")}>
               {words} {words === 1 ? "palavra" : "palavras"} · ideal: 60 a 150
             </span>
-            <span>{answer.length}/{MAX_CHARS}</span>
+            <span className="flex items-center gap-4">
+              {running && (
+                <span aria-label={`Tempo: ${formatSeconds(elapsed)}`} className={cn("font-bold tabular-nums", elapsed > 180 && "text-coral-edge")}>
+                  ⏱ {clock(elapsed)}
+                </span>
+              )}
+              <span>
+                {answer.length}/{MAX_CHARS}
+              </span>
+            </span>
           </div>
+          <VoiceInput onText={(text) => onChange(answer ? `${answer} ${text}` : text)} disabled={busy} />
           {question.phrases.length > 0 && (
             <details className="rounded-2xl border-2 border-border bg-surface px-4 py-3">
               <summary className="cursor-pointer font-bold">Frases úteis para começar</summary>

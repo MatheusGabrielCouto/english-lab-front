@@ -4,7 +4,9 @@ import { Suspense } from "react";
 import { AnswerSession } from "@/components/interview/answer-session";
 import { serverApi } from "@/lib/api-server";
 import { categoryEmoji, categoryTitle, DIFFICULTY } from "@/lib/interview-format";
-import type { QuestionDetail } from "@/lib/interview-types";
+import { ListenButton } from "@/components/interview/feedback-view";
+import { nextAfter } from "@/lib/interview-format";
+import type { QuestionDetail, QuestionList } from "@/lib/interview-types";
 
 export const metadata: Metadata = { title: "Responder pergunta" };
 
@@ -23,8 +25,12 @@ export default function QuestionPage({ params }: PageProps<"/entrevista/[slug]">
 
 async function Question({ params }: { params: PageProps<"/entrevista/[slug]">["params"] }) {
   const { slug } = await params;
-  const detail = await serverApi<QuestionDetail>(`/api/interview/questions/${slug}`, `/entrevista/${slug}`);
+  const [detail, list] = await Promise.all([
+    serverApi<QuestionDetail>(`/api/interview/questions/${slug}`, `/entrevista/${slug}`),
+    serverApi<QuestionList>("/api/interview/questions", `/entrevista/${slug}`),
+  ]);
   const { question } = detail;
+  const upcoming = nextAfter(list.questions, slug);
 
   return (
     <>
@@ -37,8 +43,14 @@ async function Question({ params }: { params: PageProps<"/entrevista/[slug]">["p
       <h1 className="mt-3 font-display text-3xl leading-tight font-semibold text-balance md:text-4xl" lang="en">
         {question.question}
       </h1>
+      <div className="mt-1">
+        <ListenButton text={question.question} label="Ouvir a pergunta" />
+      </div>
       {question.context && <p className="mt-2 max-w-2xl text-pretty text-muted">{question.context}</p>}
-      <AnswerSession detail={detail} />
+      <p className="mt-3 text-sm text-muted">
+        Em uma entrevista de verdade, uma boa resposta leva de 1 a 2 minutos. Tente falar ou escrever neste ritmo.
+      </p>
+      <AnswerSession detail={detail} next={upcoming ? { slug: upcoming.slug, question: upcoming.question } : null} />
     </>
   );
 }
