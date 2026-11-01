@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AppHeader } from "@/components/app-header";
-import { AnkiCard, CardSkeleton, GoalCard, PlacementInvite, ReadingCard, MotivationCard, Shortcuts, TodayCard, TrailCard } from "@/components/painel/cards";
+import { AnkiCard, CardSkeleton, GoalCard, InterviewCard, MotivationCard, NextStepCard, PlacementInvite, ReadingCard, Shortcuts, TodayCard, TrailCard } from "@/components/painel/cards";
 import { StatsStrip } from "@/components/trail/stats-strip";
 import type { Deck } from "@/lib/anki-types";
 import type { ChecklistToday } from "@/lib/checklist-types";
@@ -10,7 +10,9 @@ import type { MotivationItem } from "@/lib/motivation-types";
 import type { GoalOverview } from "@/lib/goal-types";
 import { serverApi } from "@/lib/api-server";
 import type { Book } from "@/lib/book-types";
-import { ankiToday, continueReading, dayMessage, greetingFor, levelProgress } from "@/lib/dashboard";
+import { ankiToday, continueReading, dayMessage, greetingFor, levelProgress, nextSteps } from "@/lib/dashboard";
+import { overview as interviewOverview, suggestQuestion } from "@/lib/interview-format";
+import type { QuestionList } from "@/lib/interview-types";
 import { getCurrentUser } from "@/lib/session";
 import type { TrailOverview } from "@/lib/trail-types";
 import { findNext } from "@/lib/trail-view";
@@ -51,18 +53,19 @@ async function Dashboard() {
 
       {!overview.placement && !started && <div className="mt-6"><PlacementInvite /></div>}
 
-      <div className="mt-8 grid gap-5 lg:grid-cols-2">
+      {/* o que fazer agora, antes de qualquer outro cartão */}
+      <div className="mt-8">
+        <Suspense fallback={<CardSkeleton label="Escolhendo o seu próximo passo" />}>
+          <NextStep lesson={findNext(overview)} />
+        </Suspense>
+      </div>
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <Suspense fallback={<CardSkeleton label="Carregando o checklist de hoje" />}>
           <Today />
         </Suspense>
         <Suspense fallback={<CardSkeleton label="Carregando sua meta" />}>
           <Goal />
-        </Suspense>
-      </div>
-
-      <div className="mt-5">
-        <Suspense fallback={<CardSkeleton label="Carregando sua motivação" />}>
-          <Motivation />
         </Suspense>
       </div>
 
@@ -80,9 +83,42 @@ async function Dashboard() {
         </Suspense>
       </div>
 
+      <div className="mt-5 grid gap-5 md:grid-cols-2">
+        <Suspense fallback={<CardSkeleton label="Carregando a entrevista" />}>
+          <Interview />
+        </Suspense>
+        <Suspense fallback={<CardSkeleton label="Carregando sua motivação" />}>
+          <Motivation />
+        </Suspense>
+      </div>
+
       <Shortcuts isAdmin={isAdmin} hasPlacement={overview.placement !== null} />
     </main>
   );
+}
+
+/** Junta o que há para fazer hoje; se alguma fonte falhar, o passo dela só não aparece. */
+async function NextStep({ lesson }: { lesson: ReturnType<typeof findNext> }) {
+  const [checklist, decks, books, interview] = await Promise.allSettled([
+    serverApi<ChecklistToday>("/api/checklist/today", "/painel"),
+    serverApi<{ decks: Deck[] }>("/api/anki/decks", "/painel"),
+    serverApi<{ books: Book[] }>("/api/books", "/painel"),
+    serverApi<QuestionList>("/api/interview/questions", "/painel"),
+  ]);
+  const value = <T,>(result: PromiseSettledResult<T>) => (result.status === "fulfilled" ? result.value : null);
+  const steps = nextSteps({
+    checklist: value(checklist),
+    anki: ankiToday(value(decks)?.decks ?? []),
+    lesson,
+    reading: continueReading(value(books)?.books ?? []),
+    interview: suggestQuestion(value(interview)?.questions ?? []),
+  });
+  return <NextStepCard steps={steps} />;
+}
+
+async function Interview() {
+  const { questions } = await serverApi<QuestionList>("/api/interview/questions", "/painel");
+  return <InterviewCard summary={interviewOverview(questions)} suggestion={suggestQuestion(questions)} />;
 }
 
 async function Anki() {

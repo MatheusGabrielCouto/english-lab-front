@@ -16,7 +16,8 @@ import { ItemBody } from "@/components/motivation/item-body";
 import type { MotivationItem } from "@/lib/motivation-types";
 import type { Book } from "@/lib/book-types";
 import { levelName } from "@/lib/trail-types";
-import type { AnkiToday } from "@/lib/dashboard";
+import type { AnkiToday, Step } from "@/lib/dashboard";
+import type { QuestionSummary } from "@/lib/interview-types";
 import { readingPercent } from "@/lib/dashboard";
 import type { NextLesson } from "@/lib/trail-view";
 
@@ -334,6 +335,110 @@ export function MotivationCard({ item }: { item: MotivationItem | null }) {
         <ButtonLink href="/motivacao" variant="ghost">
           {item ? "Abrir meu mural" : "Criar meu mural"}
         </ButtonLink>
+      </div>
+    </Card>
+  );
+}
+
+
+/** O que fazer agora: um passo em destaque, com o botão certo, e os próximos logo abaixo. */
+export function NextStepCard({ steps }: { steps: Step[] }) {
+  if (steps.length === 0) {
+    return (
+      <Card tone="primary" className="flex flex-wrap items-center gap-5 p-6 md:p-8">
+        <span aria-hidden className="grid size-16 shrink-0 place-items-center rounded-3xl bg-surface text-4xl">
+          🎉
+        </span>
+        <div className="min-w-0 flex-1 basis-64">
+          <h2 className="font-display text-3xl font-semibold text-balance">Tudo feito por hoje!</h2>
+          <p className="mt-1 text-lg text-muted text-pretty">Seu checklist está em dia. Se quiser ir além, que tal ler um pouco ou praticar uma pergunta de entrevista?</p>
+        </div>
+        <ButtonLink href="/hoje" variant="ghost">
+          Ver o checklist
+        </ButtonLink>
+      </Card>
+    );
+  }
+
+  const [main, ...rest] = steps;
+  return (
+    <Card tone="primary" className="flex flex-col gap-5 p-6 md:p-8">
+      <div className="flex flex-wrap items-center gap-5">
+        <span aria-hidden className="grid size-16 shrink-0 place-items-center rounded-3xl bg-surface text-4xl">
+          {main.icon}
+        </span>
+        <div className="min-w-0 flex-1 basis-64">
+          <p className="text-sm font-bold tracking-wide text-muted uppercase">Seu próximo passo</p>
+          <h2 className="mt-1 font-display text-3xl leading-tight font-semibold text-balance">{main.title}</h2>
+          <p className="mt-1 text-pretty text-muted" lang={main.key === "interview" ? "en" : undefined}>
+            {main.detail}
+            {main.minutes !== null && <span className="font-semibold"> · cerca de {main.minutes} min</span>}
+          </p>
+        </div>
+        <ButtonLink href={main.href} size="lg">
+          {main.cta}
+        </ButtonLink>
+      </div>
+
+      {rest.length > 0 && (
+        <div className="border-t-2 border-primary/20 pt-4">
+          <p className="text-sm font-bold text-muted">Depois, se der</p>
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {rest.slice(0, 4).map((step) => (
+              <li key={step.key}>
+                <Link
+                  href={step.href}
+                  className="inline-flex items-center gap-2 rounded-pill border-2 border-border bg-surface px-4 py-2 text-sm font-bold transition-colors hover:border-primary hover:bg-surface-soft"
+                >
+                  <span aria-hidden>{step.icon}</span>
+                  {step.key === "anki" ? "Anki" : step.key === "lesson" ? "Lição" : step.key === "reading" ? "Leitura" : step.key === "interview" ? "Entrevista" : step.key === "diary" ? "Diário" : step.title}
+                  {step.minutes !== null && <span className="font-medium text-muted">{step.minutes} min</span>}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+/** Entrevista no painel: quantas perguntas já foram, a nota média e a sugestão do momento. */
+export function InterviewCard({
+  summary,
+  suggestion,
+}: {
+  summary: { total: number; answered: number; average: number | null; toReview: number };
+  suggestion: QuestionSummary | null;
+}) {
+  const percent = summary.total ? Math.round((summary.answered / summary.total) * 100) : 0;
+  return (
+    <Card tone="coral" className="flex h-full flex-col justify-between gap-5">
+      <div>
+        <h2 className="font-display text-2xl font-semibold">Entrevista</h2>
+        <p className="mt-2">
+          <span className="font-display text-5xl leading-none font-semibold tabular-nums">{summary.answered}</span>{" "}
+          <span className="font-bold">de {summary.total} perguntas respondidas</span>
+        </p>
+        <Progress value={percent} label="Perguntas de entrevista respondidas" className="mt-3 h-3" />
+        <p className="mt-2 text-sm font-semibold text-muted">
+          {summary.average !== null ? `Nota média ${summary.average.toLocaleString("pt-BR")}/5` : "Responda a primeira para ver sua nota"}
+          {summary.toReview > 0 && ` · ${summary.toReview} para revisar`}
+        </p>
+        {suggestion && (
+          <p className="mt-3 text-pretty">
+            <span className="text-sm font-bold text-muted">Sugestão: </span>
+            <span lang="en">{suggestion.question}</span>
+          </p>
+        )}
+      </div>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <ButtonLink href={suggestion ? `/entrevista/${suggestion.slug}` : "/entrevista"} variant="coral">
+          {suggestion ? "Praticar agora" : "Abrir as perguntas"}
+        </ButtonLink>
+        <Link href="/entrevista/simulado" className="font-bold underline-offset-4 hover:underline">
+          Fazer um simulado
+        </Link>
       </div>
     </Card>
   );
