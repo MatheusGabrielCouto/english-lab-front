@@ -197,7 +197,8 @@ export function StudySession({
           </div>
 
           <div onClick={(event) => event.stopPropagation()}>
-            <VoiceButton text={spokenText(side)} />
+            {/* lacuna: lê a frase; nos demais, sempre a palavra da frente (o verso traz tradução e definição) */}
+            <VoiceButton text={spokenText(card.noteType === "CLOZE" ? side : card.question)} />
           </div>
         </Card>
       </main>

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/cn";
 import type { Part } from "@/lib/anki-types";
+import { cleanSpokenText } from "@/lib/speech-text";
 
 /** Texto de um lado do cartão. Sempre texto puro: nada de HTML vindo do conteúdo. */
 export function CardText({ parts, className }: { parts: Part[]; className?: string }) {
@@ -25,10 +26,12 @@ export function CardText({ parts, className }: { parts: Part[]; className?: stri
   );
 }
 
-/** Texto para ler em voz alta; esconde as lacunas ainda não reveladas. */
+/** Texto para ler em voz alta; esconde as lacunas ainda não reveladas e a pronúncia/classe gramatical. */
 export function spokenText(parts: Part[]) {
-  return parts
-    .filter((part) => !part.hidden)
-    .map((part) => part.text)
-    .join("");
+  return cleanSpokenText(
+    parts
+      .filter((part) => !part.hidden)
+      .map((part) => part.text)
+      .join(""),
+  );
 }
