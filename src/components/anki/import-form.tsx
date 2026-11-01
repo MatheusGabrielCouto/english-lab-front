@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useRef, useState, type DragEvent, type FormEvent } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,6 +18,7 @@ function size(bytes: number) {
 const plural = (n: number, one: string, many: string) => `${n.toLocaleString("pt-BR")} ${n === 1 ? one : many}`;
 
 export function ImportForm({ decks }: { decks: { id: string; fullName: string }[] }) {
+  const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [targetDeckId, setTargetDeckId] = useState("");
@@ -58,6 +60,15 @@ export function ImportForm({ decks }: { decks: { id: string; fullName: string }[
       setFile(null);
       if (input.current) input.current.value = "";
     } catch (e) {
+      if (e instanceof ApiError && e.status === 404 && targetDeckId) {
+        // o baralho escolhido foi apagado depois que a lista desta página foi carregada
+        setTargetDeckId("");
+        router.refresh();
+        setError(
+          'O baralho escolhido em "Importar para" não existe mais (talvez tenha sido apagado). Atualizei a lista e voltei para "Criar baralhos a partir do arquivo", que recria a pasta do arquivo. Toque em Importar de novo.',
+        );
+        return;
+      }
       setError(
         e instanceof ApiError
           ? e.status === 413
