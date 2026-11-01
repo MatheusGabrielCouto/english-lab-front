@@ -2,7 +2,7 @@
 const PART_OF_SPEECH =
   "noun|verb|adjective|adverb|pronoun|preposition|conjunction|determiner|exclamation|number|" +
   "modal verb|auxiliary verb|linking verb|phrasal verb|indefinite article|definite article|" +
-  "infinitive marker|prefix|suffix|abbreviation|symbol";
+  "infinitive marker|article|particle|prefix|suffix|abbreviation|symbol";
 
 const TRAILING_POS = new RegExp(`[ \\t]*\\((?:${PART_OF_SPEECH})(?:,\\s*(?:${PART_OF_SPEECH}))*\\)[ \\t]*$`, "i");
 const PHONETIC_LINE = /^[ \t]*\/[^/\n]+\/[ \t]*$/;

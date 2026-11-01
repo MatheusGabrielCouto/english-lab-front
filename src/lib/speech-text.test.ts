@@ -8,6 +8,12 @@ describe("cleanSpokenText", () => {
     expect(cleanSpokenText("cannot\n/ˈkænɑːt/")).toBe("cannot");
   });
 
+  it("reconhece artigo, partícula e abreviação", () => {
+    expect(cleanSpokenText("the (article)")).toBe("the");
+    expect(cleanSpokenText("to (particle)")).toBe("to");
+    expect(cleanSpokenText("e.g. (abbreviation)")).toBe("e.g.");
+  });
+
   it("aceita mais de uma classe e maiúsculas", () => {
     expect(cleanSpokenText("light (noun, adjective)")).toBe("light");
     expect(cleanSpokenText("go (Verb)")).toBe("go");
