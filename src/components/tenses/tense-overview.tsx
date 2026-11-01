@@ -8,6 +8,7 @@ import {
   missesText,
   percentText,
   SOURCE_LABEL,
+  TENSE_NAME,
   TENSE_ORDER,
   TENSE_STYLE,
 } from "@/lib/tense-format";
@@ -22,8 +23,10 @@ export function TenseOverview({ overview }: { overview: TensesOverview }) {
   return (
     <div className="mt-6 flex flex-col gap-8">
       <Card tone={overview.suggestion.tense ? "coral" : "primary"} className="flex flex-col gap-3">
-        <p className="text-sm font-bold text-muted">O que fazer agora</p>
-        <p className="font-display text-2xl leading-snug font-semibold text-balance">{overview.suggestion.text}</p>
+        <p className="text-sm font-bold text-muted">
+          {overview.suggestion.tense ? `O que fazer agora · ${TENSE_NAME[overview.suggestion.tense]}` : "O que fazer agora"}
+        </p>
+        <p className="font-display text-xl leading-snug font-semibold text-balance md:text-2xl">{overview.suggestion.text}</p>
         {!anyCards && (
           <div className="flex flex-wrap gap-3">
             <ButtonLink href="/anki/importar" variant="primary">
@@ -83,48 +86,65 @@ export function TenseOverview({ overview }: { overview: TensesOverview }) {
 function TenseCard({ row }: { row: TenseRow }) {
   const style = TENSE_STYLE[row.tense];
   return (
-    <div className={cn("flex h-full flex-col gap-4 rounded-card border-2 p-5", style.soft)}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="font-display text-2xl font-semibold">
-            <span aria-hidden>{style.emoji}</span> {row.label}
-          </h3>
-          <p className="text-sm text-muted">Pistas: {style.clue}</p>
+    <article className="flex h-full flex-col overflow-hidden rounded-card border-2 border-border bg-surface shadow-[0_4px_0_0_var(--color-border)]">
+      <div aria-hidden className={cn("h-2 shrink-0", style.solid)} />
+      <div className="flex flex-1 flex-col gap-5 p-5">
+        <div className="flex items-start gap-3">
+          <span aria-hidden className={cn("grid size-12 shrink-0 place-items-center rounded-2xl border-2 text-2xl", style.soft)}>
+            {style.emoji}
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-display text-2xl leading-tight font-semibold">{TENSE_NAME[row.tense]}</h3>
+            <p className="text-sm text-muted">Pistas: {style.clue}</p>
+          </div>
         </div>
-        <span className={cn("shrink-0 rounded-pill px-3 py-1 text-sm font-bold", LEVEL_CLASS[row.level])}>{LEVEL_LABEL[row.level]}</span>
+
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          {row.answers === 0 ? (
+            <span className="font-display text-2xl leading-none font-semibold text-muted">Sem respostas ainda</span>
+          ) : (
+            <>
+              <span className="font-display text-5xl leading-none font-semibold tabular-nums">{percentText(row.accuracy)}</span>
+              <span className="text-muted">{answersText(row.answers)}</span>
+            </>
+          )}
+          <span className={cn("rounded-pill px-3 py-1 text-sm font-bold sm:ml-auto", LEVEL_CLASS[row.level])}>{LEVEL_LABEL[row.level]}</span>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <SourceBar label="Anki" tally={row.anki} barClass={style.solid} emptyText={row.cards === 0 ? "sem cartões com a tag" : "sem revisões ainda"} />
+          <SourceBar label="Trilha" tally={row.trail} barClass={style.solid} emptyText="sem exercícios ainda" />
+        </div>
+
+        <div className="mt-auto rounded-2xl bg-surface-soft px-4 py-3">
+          <p className="text-xs font-bold tracking-wide text-muted uppercase">Exemplo</p>
+          <p lang="en" className="font-semibold">
+            {style.example}
+          </p>
+        </div>
       </div>
-
-      <div className="flex items-baseline gap-3">
-        <span className="font-display text-5xl font-semibold tabular-nums">{percentText(row.accuracy)}</span>
-        <span className="text-muted">{answersText(row.answers)}</span>
-      </div>
-
-      <div className="flex flex-col gap-3">
-        <SourceBar label="Anki" tally={row.anki} barClass={style.solid} />
-        <SourceBar label="Trilha" tally={row.trail} barClass={style.solid} />
-      </div>
-
-      <p lang="en" className="text-sm font-semibold">
-        {style.example}
-      </p>
-
-      {row.cards === 0 && row.tense !== "perfeito" && (
-        <p className="text-sm text-muted">
-          Nenhum cartão com a tag <code className="rounded bg-surface px-1">tempo:{row.tense}</code> ainda.
-        </p>
-      )}
-    </div>
+    </article>
   );
 }
 
-function SourceBar({ label, tally, barClass }: { label: string; tally: Tally; barClass: string }) {
+function SourceBar({ label, tally, barClass, emptyText }: { label: string; tally: Tally; barClass: string; emptyText: string }) {
+  if (tally.answers === 0) {
+    return (
+      <div className="flex items-baseline justify-between gap-3 text-sm">
+        <span className="font-bold">{label}</span>
+        <span className="text-right text-muted">{emptyText}</span>
+      </div>
+    );
+  }
   return (
     <div>
-      <div className="flex items-baseline justify-between text-sm font-bold">
-        <span>{label}</span>
-        <span className="tabular-nums text-muted">{tally.answers === 0 ? "sem respostas" : `${tally.correct} de ${tally.answers} · ${percentText(tally.accuracy)}`}</span>
+      <div className="flex items-baseline justify-between gap-3 text-sm">
+        <span className="font-bold">{label}</span>
+        <span className="tabular-nums text-muted">
+          {tally.correct} de {tally.answers} · <span className="font-bold text-foreground">{percentText(tally.accuracy)}</span>
+        </span>
       </div>
-      <div role="progressbar" aria-label={`Acerto no ${label}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={tally.accuracy ?? 0} className="mt-1 h-3 overflow-hidden rounded-pill bg-surface">
+      <div role="progressbar" aria-label={`Acerto no ${label}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={tally.accuracy ?? 0} className="mt-1.5 h-3 overflow-hidden rounded-pill bg-surface-soft">
         <div className={cn("h-full rounded-pill transition-[width] duration-300", barClass)} style={{ width: `${tally.accuracy ?? 0}%` }} />
       </div>
     </div>
@@ -137,14 +157,12 @@ function WeakSpotItem({ spot }: { spot: WeakSpot }) {
     <div className="flex flex-col gap-2 rounded-card border-2 border-border bg-surface p-4">
       <div className="flex flex-wrap items-center gap-2 text-sm font-bold">
         <span className={cn("rounded-pill border px-3 py-0.5", style.soft)}>
-          <span aria-hidden>{style.emoji}</span> {spot.tense}
+          <span aria-hidden>{style.emoji}</span> {TENSE_NAME[spot.tense]}
         </span>
         <span className="rounded-pill bg-surface-soft px-3 py-0.5">{SOURCE_LABEL[spot.source]}</span>
         <span className="text-muted">{missesText(spot.misses, spot.attempts)}</span>
       </div>
-      <p className="text-lg font-semibold text-pretty">
-        {spot.prompt}
-      </p>
+      <p className="text-lg font-semibold text-pretty">{spot.prompt}</p>
       {spot.answer && (
         <p className="text-pretty">
           <span className="text-sm font-bold text-muted">Resposta: </span>

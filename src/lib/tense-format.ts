@@ -26,6 +26,9 @@ export const LEVEL_CLASS: Record<TenseLevel, string> = {
   strong: "bg-primary-soft text-foreground",
 };
 
+/** Nome do tempo para título e etiqueta. */
+export const TENSE_NAME: Record<Tense, string> = { passado: "Passado", presente: "Presente", futuro: "Futuro", perfeito: "Perfeitos" };
+
 export const SOURCE_LABEL = { anki: "Anki", trail: "Trilha" } as const;
 
 export const percentText = (value: number | null) => (value === null ? "–" : `${value}%`);
