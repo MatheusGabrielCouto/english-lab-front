@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { QuestionSummary } from "./interview-types";
 import {
+  answerTense,
   categoryTitle,
   filterQuestions,
   formatSeconds,
@@ -154,5 +155,17 @@ describe("simulado", () => {
   it("calcula a média e o tempo", () => {
     expect(summarizeMock([{ score: 4, seconds: 60 }, { score: 3, seconds: 90 }, { score: null, seconds: 10 }])).toEqual({ average: 3.5, seconds: 160, answered: 3 });
     expect(summarizeMock([]).average).toBeNull();
+  });
+});
+
+describe("answerTense", () => {
+  it.each([
+    ["Tell me about a time you disagreed with a teammate. How did you handle it?", "passado"],
+    ["What was the hardest bug you fixed?", "passado"],
+    ["What is middleware and how have you used it?", "perfeito"],
+    ["What's the difference between var, let and const?", null],
+    ["How would you scale an API that is getting more traffic?", null],
+  ])("%s", (question, expected) => {
+    expect(answerTense(question)).toBe(expected);
   });
 });

@@ -54,7 +54,7 @@ export type TrailOverview = {
 
 export type PublicExercise =
   | { key: string; type: "MULTIPLE_CHOICE"; prompt: string; choices: string[]; speak?: string }
-  | { key: string; type: "FILL_BLANK"; sentence: string; choices?: string[]; translation?: string }
+  | { key: string; type: "FILL_BLANK"; sentence: string; choices?: string[]; translation?: string; verb?: string }
   | { key: string; type: "ORDER"; prompt: string; words: string[] }
   | { key: string; type: "TRANSLATION"; prompt: string; from: "pt" | "en" }
   | { key: string; type: "DICTATION"; speak: string };

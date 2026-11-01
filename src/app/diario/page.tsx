@@ -38,6 +38,7 @@ async function Content() {
     aiEnabled: overview.aiEnabled,
     editable: true,
     prompt: overview.prompt,
+    tenseFocus: overview.tenseFocus,
     entry: overview.entry,
   };
 

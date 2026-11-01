@@ -236,7 +236,14 @@ export function FillBlank({ exercise, locked, result, onAnswer }: View<Extract<P
 
   return (
     <div className="flex flex-col gap-6">
-      <Title>Complete a frase</Title>
+      <Title>{exercise.verb ? "Conjugue o verbo" : "Complete a frase"}</Title>
+      {exercise.verb && (
+        <p className="flex items-center gap-2 text-muted">
+          Verbo:
+          <span className="rounded-pill bg-sky-soft px-3 py-1 font-display text-lg font-semibold text-foreground">{exercise.verb}</span>
+          <span className="text-sm">escreva na forma certa para a frase</span>
+        </p>
+      )}
       <p className="text-2xl leading-[3rem] font-semibold md:text-3xl md:leading-[3.5rem]">
         {before}
         {blank}

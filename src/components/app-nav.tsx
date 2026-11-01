@@ -18,6 +18,7 @@ const NAV: NavEntry[] = [
     links: [
       { href: "/trilha", label: "Trilha", hint: "Aulas do A1 ao C2" },
       { href: "/anki", label: "Anki", hint: "Flashcards e revisões" },
+      { href: "/tempos", label: "Tempos verbais", hint: "Passado, presente e futuro" },
       { href: "/biblioteca", label: "Biblioteca", hint: "Livros em PDF" },
     ],
   },

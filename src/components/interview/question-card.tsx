@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/cn";
-import { categoryEmoji, categoryTitle, DIFFICULTY, questionStatus, STATUS_LABEL, type QuestionStatus } from "@/lib/interview-format";
+import { ANSWER_TENSE_HINT, answerTense, categoryEmoji, categoryTitle, DIFFICULTY, questionStatus, STATUS_LABEL, type QuestionStatus } from "@/lib/interview-format";
 import type { QuestionSummary } from "@/lib/interview-types";
 
 const STATUS_STYLE: Record<QuestionStatus, string> = {
@@ -23,6 +23,7 @@ function Dots({ score }: { score: number }) {
 export function QuestionCard({ question }: { question: QuestionSummary }) {
   const answered = question.attempts > 0;
   const status = questionStatus(question);
+  const tense = answerTense(question.question);
   return (
     <Link
       href={`/entrevista/${question.slug}`}
@@ -36,6 +37,11 @@ export function QuestionCard({ question }: { question: QuestionSummary }) {
         <span className={cn("ml-auto rounded-pill px-2.5 py-0.5 text-xs", STATUS_STYLE[status])}>{STATUS_LABEL[status]}</span>
       </div>
       <h3 className="font-display text-xl leading-snug font-semibold text-balance">{question.question}</h3>
+      {tense && (
+        <p className="w-fit rounded-pill bg-lavender-soft px-3 py-0.5 text-sm font-bold text-foreground">
+          <span aria-hidden>{tense === "passado" ? "⏪" : "✅"}</span> {ANSWER_TENSE_HINT[tense]}
+        </p>
+      )}
       <div className="mt-auto flex flex-wrap items-center justify-between gap-2 text-sm font-bold">
         <span className={answered ? "text-foreground" : "text-muted"}>
           {answered ? `${question.attempts} ${question.attempts === 1 ? "tentativa" : "tentativas"}` : "Ainda não respondida"}

@@ -1,3 +1,4 @@
+import type { TenseCounts, TenseFocus } from "@/lib/tense-types";
 import type { Level } from "@/lib/trail-types";
 
 export const MOODS = ["🤩", "😄", "🙂", "😐", "😟", "😴"] as const;
@@ -21,6 +22,8 @@ export type DiaryEntry = {
   wordCount: number;
   mood: Mood | null;
   promptKey: string | null;
+  /** quantas frases em cada tempo verbal (conferência simples) */
+  tenses: TenseCounts;
   updatedAt: string;
   feedback: DiaryFeedback | null;
   feedbackAt: string | null;
@@ -42,6 +45,7 @@ export type DiaryOverview = {
   aiEnabled: boolean;
   editableFrom: string;
   prompt: DiaryPrompt;
+  tenseFocus: TenseFocus;
   entry: DiaryEntry | null;
   week: { day: string; written: boolean }[];
   stats: DiaryStats;
@@ -53,6 +57,7 @@ export type DiaryDay = {
   aiEnabled: boolean;
   editable: boolean;
   prompt: DiaryPrompt;
+  tenseFocus: TenseFocus;
   entry: DiaryEntry | null;
 };
 

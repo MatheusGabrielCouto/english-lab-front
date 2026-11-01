@@ -181,3 +181,19 @@ export function summarizeMock(results: { score: number | null; seconds: number }
   const average = scored.length ? Math.round((scored.reduce((sum, entry) => sum + entry.score, 0) / scored.length) * 10) / 10 : null;
   return { average, seconds: results.reduce((sum, entry) => sum + entry.seconds, 0), answered: results.length };
 }
+
+/**
+ * Em que tempo a resposta deve vir, quando a pergunta pede um específico. Só devolve o que
+ * ajuda o aluno a notar: "Tell me about a time…" pede passado; "How have you used…" pede perfeito.
+ */
+export function answerTense(question: string): "passado" | "perfeito" | null {
+  const text = question.toLowerCase();
+  if (/\b(have|has) (you|i|we)\b.*\b(used|worked|built|ever|done|had)\b/.test(text)) return "perfeito";
+  if (/\b(tell me about a time|describe a time|did you|what was|how did you|were you|was your)\b/.test(text)) return "passado";
+  return null;
+}
+
+export const ANSWER_TENSE_HINT = {
+  passado: "Responda no passado (I did…)",
+  perfeito: "Responda com have/has + particípio (I have used…)",
+} as const;

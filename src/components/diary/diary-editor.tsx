@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { DiaryFeedbackView } from "@/components/diary/diary-feedback-view";
+import { TenseChallenge } from "@/components/diary/tense-challenge";
 import { ListenButton } from "@/components/interview/feedback-view";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -128,6 +129,8 @@ export function DiaryEditor({ view }: { view: DiaryDay }) {
           <ListenButton text={prompt.en} label="Ouvir o tema" />
         </div>
       </Card>
+
+      <TenseChallenge focus={view.tenseFocus} counts={entry?.tenses ?? null} />
 
       {editable ? (
         <section className="flex flex-col gap-4">
