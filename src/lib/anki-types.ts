@@ -95,6 +95,21 @@ export type Stats = {
     mature: number;
     suspended: number;
   };
+  /** quanto falta estudar hoje, respeitando os limites diários */
+  pending: DeckCounts;
+  /** cartões vistos pela primeira vez hoje */
+  newToday: number;
+  bestStreak: number;
+  /** quantas vezes cada botão foi usado no período */
+  answers: { again: number; hard: number; good: number; easy: number };
+  /** respostas por dia da semana (segunda = 0 … domingo = 6) */
+  byWeekday: number[];
+  /** respostas por hora do dia (0–23) */
+  byHour: number[];
+  /** últimos 84 dias, do mais antigo ao de hoje */
+  activity: { date: string; reviews: number }[];
+  pace: { perActiveDay: number; secondsPerAnswer: number; newPerDay: number; newInPeriod: number };
+  hardest: { cardId: string; noteId: string; lapses: number; text: string }[];
 };
 
 export type ImportSummary = {
